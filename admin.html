@@ -248,7 +248,7 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
     </div>
 
     <div id="r-video-wrap">
-      <label for="r-video">الفيديو <span class="opt">(MP4 طولي، أقل من 45 ميگا)</span></label>
+      <label for="r-video">الفيديو <span class="opt">(MP4 طولي، لحد 95 ميگا)</span></label>
       <input id="r-video" type="file" accept="video/mp4,video/quicktime,video/webm,video/*" class="file-hidden">
       <label for="r-video" class="btn btn-line file-btn">🎬 اختار فيديو من الموبايل</label>
       <p class="hint" id="r-video-info"></p>
@@ -329,11 +329,35 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
   };
   const b64FromBytes = (u8) => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
   const bytesFromB64 = (b) => { const s = atob(String(b).replace(/\s/g, '')); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; };
+  // Large files: let the browser do the base64 work (lighter on phone memory)
+  const fileToB64 = (blob) => new Promise((ok, bad) => {
+    const fr = new FileReader();
+    fr.onload = () => ok(String(fr.result).split(',')[1] || '');
+    fr.onerror = () => bad(fr.error || new Error('read'));
+    fr.readAsDataURL(blob);
+  });
+  // PUT with upload progress (fetch has none)
+  const apiPut = (path, payload, onProgress) => new Promise((ok, bad) => {
+    const x = new XMLHttpRequest();
+    x.open('PUT', `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}${path}`);
+    x.setRequestHeader('Authorization', `Bearer ${token}`);
+    x.setRequestHeader('Accept', 'application/vnd.github+json');
+    x.setRequestHeader('X-GitHub-Api-Version', '2022-11-28');
+    x.setRequestHeader('Content-Type', 'application/json');
+    if (onProgress) x.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(e.loaded / e.total); };
+    x.onload = () => {
+      if (x.status >= 200 && x.status < 300) { try { ok(JSON.parse(x.responseText)); } catch (err) { ok(null); } }
+      else { const e = new Error('GitHub ' + x.status); e.status = x.status; bad(e); }
+    };
+    x.onerror = () => { const e = new Error('network'); e.status = 0; bad(e); };
+    x.send(JSON.stringify(payload));
+  });
   const explain = (e) => {
     if (e.status === 401) return 'الرمز غلط أو منتهي. سوّي رمز جديد والصقه.';
     if (e.status === 403) return 'الرمز ما عنده صلاحية كتابة. تأكد إنك اخترت Contents: Read and write.';
     if (e.status === 404) return 'ما لگيت المستودع. تأكد إن الرمز مربوط بمستودع موقعك، وإن اسم الحساب والمستودع صحيح (من "إعدادات المستودع").';
-    if (e.status === 413) return 'الفيديو حجمه كبير على GitHub. صدّره بحجم أصغر (1080p) وجرّب مرة ثانية.';
+    if (e.status === 413) return 'GitHub رفض الفيديو لأن حجمه كبير. صدّره بحجم أصغر (1080p) وجرّب مرة ثانية.';
+    if (e.status === 0) return 'انقطع الاتصال أثناء الرفع. تأكد من الإنترنت (الواي فاي أحسن للفيديوهات الكبيرة) واضغط "حفظ ونشر" مرة ثانية.';
     if (e.status === 409 || e.status === 422) return 'صار تعديل على الموقع من مكان ثاني. حدّث الصفحة وأعد التعديل.';
     return 'ما گدرت أتصل بـ GitHub. تأكد من الإنترنت وجرّب مرة ثانية.';
   };
@@ -532,7 +556,8 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#sheet').hidden) closeEditor(); });
 
   /* ---------- reels ---------- */
-  const MAX_MB = 45;
+  const MAX_MB = 95;   // GitHub refuses any single file over 100 MB
+  const BIG_MB = 40;   // above this: warn about upload time and loading speed for visitors
   const reelPoster = (r) => r._posterPreview || resolve(r.poster) || (r.type === 'youtube' && ytId(r.src) ? `https://i.ytimg.com/vi/${ytId(r.src)}/hqdefault.jpg` : '');
   const renderReels = () => {
     const ul = $('#reels');
@@ -642,7 +667,7 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
     if (mb > MAX_MB) {
       $('#r-video').value = '';
       info.textContent = '';
-      return rErr(`حجم الفيديو ${mb.toFixed(0)} ميگا، والحد ${MAX_MB} ميگا. صدّره بدقة 1080p من CapCut أو أي برنامج مونتاج وجرّب مرة ثانية.`);
+      return rErr(`حجم الفيديو ${mb.toFixed(0)} ميگا. GitHub ما يقبل ملف أكبر من 100 ميگا، فالحد هنا ${MAX_MB} ميگا. صدّره بدقة 1080p من CapCut أو أي برنامج مونتاج وجرّب مرة ثانية.`);
     }
     if (rDraft._videoPreview) URL.revokeObjectURL(rDraft._videoPreview);
     rDraft._video = f; rDraft._videoPreview = URL.createObjectURL(f);
@@ -659,6 +684,7 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
       }
       const notes = [`${f.name} · ${mb.toFixed(1)} ميگا · ${p.w}×${p.h}`];
       if (p.w > p.h) notes.push('⚠️ الفيديو عرضي مو طولي، راح ينقص من الجوانب.');
+      if (mb > BIG_MB) notes.push(`⚠️ الفيديو كبير (${mb.toFixed(0)} ميگا): الرفع ياخذ وقت (الأفضل على واي فاي)، والزوار ينتظرون أكثر حتى يشتغل. إذا تگدر صدّره 1080p حتى يصير أقل من ${BIG_MB} ميگا.`);
       if (iphoneMov) notes.push('⚠️ فيديوهات الآيفون (MOV) ممكن ما تشتغل على بعض أجهزة الأندرويد. الأضمن تصدّره MP4.');
       info.textContent = notes.join(' ');
       info.className = notes.length > 1 ? 'hint warn' : 'hint';
@@ -718,10 +744,13 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
         k++;
         const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
         if (r._video) {
-          setStatus(`جاري رفع الفيديو ${k} من ${reelFiles.length}… لا تسد الصفحة`);
+          const label = `جاري رفع الفيديو ${k} من ${reelFiles.length}`;
+          setStatus(`${label}… جاري التجهيز، لا تسد الصفحة`);
           const ext = ((r._video.name.match(/\.(mp4|mov|webm|m4v)$/i) || [, 'mp4'])[1]).toLowerCase();
           const name = `assets/reels/${id}.${ext}`;
-          await api(`/contents/${name}`, { method: 'PUT', body: JSON.stringify({ message: `رفع ريل: ${r.title || id}`, content: b64FromBytes(new Uint8Array(await r._video.arrayBuffer())), branch: cfg.branch }) });
+          const b64 = await fileToB64(r._video);
+          await apiPut(`/contents/${name}`, { message: `رفع ريل: ${r.title || id}`, content: b64, branch: cfg.branch },
+            (f) => setStatus(`${label}: ${Math.round(f * 100)}٪ … لا تسد الصفحة`));
           r.src = name;
           delete r._video;
         }
