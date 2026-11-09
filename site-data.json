@@ -81,6 +81,11 @@
   "reels": [
     {
       "type": "video",
+      "src": "assets/reels/mw9ud17s-ifdd.mov",
+      "poster": "assets/reels/mw9ud17s-ifdd.jpg"
+    },
+    {
+      "type": "video",
       "src": "assets/reels/mw93o5zo-bsd0.mp4",
       "poster": "assets/reels/mw93o5zo-bsd0.jpg"
     },
