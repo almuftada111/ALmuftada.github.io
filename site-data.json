@@ -86,8 +86,18 @@
     },
     {
       "type": "video",
+      "src": "assets/reels/mw9up2vz-1ye5.mp4",
+      "poster": "assets/reels/mw9up2vz-1ye5.jpg"
+    },
+    {
+      "type": "video",
       "src": "assets/reels/mw9ud17s-ifdd.mov",
       "poster": "assets/reels/mw9ud17s-ifdd.jpg"
+    },
+    {
+      "type": "video",
+      "src": "assets/reels/mw9upaaf-axlb.mp4",
+      "poster": "assets/reels/mw9upaaf-axlb.jpg"
     },
     {
       "type": "video",
