@@ -196,6 +196,43 @@ button.work,a.work{display:block;cursor:pointer;text-align:right;width:100%;font
 .work:hover img,.work:hover video,.work:hover .scene{transform:scale(1.05)}
 .work:hover .vf,.work:focus-visible .vf{opacity:1;transform:none}
 
+/* ---------- reels (9:16) ---------- */
+.reels-sec{padding-bottom:clamp(50px,7vw,90px)}
+.reels-track{--edge:max(var(--gutter),calc((100vw - var(--wrap)) / 2 + var(--gutter)));display:flex;gap:14px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;padding:6px var(--edge) 16px;scroll-padding-inline:var(--edge);scrollbar-width:thin;scrollbar-color:rgba(226,178,76,.4) transparent}
+.reels-track:focus-visible{outline:none}
+.reel{flex:none;width:clamp(180px,58vw,260px);aspect-ratio:9/16;position:relative;border-radius:10px;overflow:hidden;scroll-snap-align:start;background:var(--navy);isolation:isolate;text-align:right;display:block;cursor:pointer;border:1px solid var(--line);transition:border-color .25s,transform .25s}
+.reel:hover,.reel:focus-visible{border-color:var(--gold);transform:translateY(-3px)}
+.reel .scene{position:absolute;inset:0}
+.reel video,.reel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.reel::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,8,12,.35) 0%,transparent 22%,transparent 55%,rgba(7,8,12,.92) 100%);z-index:1}
+.reel-badge{position:absolute;top:12px;left:12px;z-index:2;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(11,13,18,.5);border:1px solid rgba(244,241,234,.25);backdrop-filter:blur(6px)}
+.reel-badge svg{width:14px;height:14px}
+.reel-tag{position:absolute;top:18px;right:14px;z-index:2;font-family:var(--f-mono);font-size:10px;letter-spacing:.16em;color:rgba(244,241,234,.75);direction:ltr}
+.reel-info{position:absolute;inset:auto 14px 14px;z-index:2}
+.reel-info b{display:block;font-family:var(--f-head);font-weight:600;font-size:16px;line-height:1.4}
+.reel-info span{display:block;font-size:12.5px;color:rgba(244,241,234,.7);margin-top:2px;line-height:1.5}
+.reels-ctl{display:none;justify-content:flex-start;gap:10px}
+.rc-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);font-size:18px;color:var(--paper)}
+.rc-btn:hover{border-color:var(--gold);color:var(--gold)}
+@media (min-width:900px){.reels-ctl{display:flex}}
+
+/* reel viewer */
+.reelv{position:fixed;inset:0;z-index:120;background:rgba(5,6,9,.97);display:flex;align-items:center;justify-content:center;padding:calc(56px + env(safe-area-inset-top,0px)) 16px calc(70px + env(safe-area-inset-bottom,0px));touch-action:pan-x}
+.rv-stage{height:100%;max-height:860px;aspect-ratio:9/16;max-width:100%;border-radius:12px;overflow:hidden;background:#000;position:relative}
+.rv-stage video,.rv-stage iframe{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border:0;background:#000}
+.rv-top{position:absolute;top:env(safe-area-inset-top,0px);inset-inline:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+.rv-count{font-family:var(--f-mono);font-size:13px;color:var(--muted);letter-spacing:.1em}
+.rv-x{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);font-size:18px}
+.rv-x:hover{border-color:var(--gold);color:var(--gold)}
+.rv-nav{position:absolute;top:50%;transform:translateY(-50%);width:50px;height:50px;border-radius:50%;border:1px solid var(--line);font-size:22px;background:rgba(11,13,18,.6)}
+.rv-nav:hover{border-color:var(--gold);color:var(--gold)}
+.rv-nav:disabled{opacity:.25;cursor:default}
+.rv-prev{right:max(16px,calc(50% - 300px))}
+.rv-next{left:max(16px,calc(50% - 300px))}
+.rv-cap{position:absolute;bottom:calc(14px + env(safe-area-inset-bottom,0px));inset-inline:16px;text-align:center;font-family:var(--f-head);font-size:15px;line-height:1.5}
+.rv-cap small{display:block;font-family:var(--f-body);color:var(--muted);font-size:13px}
+@media (max-width:700px){.rv-nav{display:none}.reelv{padding-inline:10px}}
+
 /* ---------- credits marquee ---------- */
 .credits{border-block:1px solid var(--line);padding:26px 0;overflow:hidden;background:#0d1018}
 .credits-label{font-family:var(--f-mono);font-size:12px;letter-spacing:.2em;color:var(--muted);text-align:center;margin-bottom:16px;direction:ltr}
@@ -398,6 +435,7 @@ footer p{color:var(--muted);font-size:14px}
       <span><b>المفتدى</b><small>TV CAMERAMAN</small></span>
     </a>
     <nav class="nav-links" aria-label="القائمة الرئيسية">
+      <a href="#reels" hidden>ريلز</a>
       <a href="#works">الأعمال</a>
       <a href="#about">عني</a>
       <a href="#experience">الخبرة</a>
@@ -439,17 +477,32 @@ footer p{color:var(--muted);font-size:14px}
 <!-- STATS -->
 <div class="stats">
   <div class="wrap">
-    <div class="stat rv"><b class="ltr">2021</b><span>بداية العمل في القنوات الفضائية</span></div>
-    <div class="stat rv"><b>3</b><span>قنوات فضائية عراقية</span></div>
-    <div class="stat rv"><b class="ltr">10</b><span>برامج وتغطيات في سجل العمل</span></div>
-    <div class="stat rv"><b>4</b><span>مجالات: إخباري، استوديو، TVC، محتوى رقمي</span></div>
+    <div class="stat"><b class="ltr">2021</b><span>بداية العمل في القنوات الفضائية</span></div>
+    <div class="stat"><b>3</b><span>قنوات فضائية عراقية</span></div>
+    <div class="stat"><b class="ltr">10</b><span>برامج وتغطيات في سجل العمل</span></div>
+    <div class="stat"><b>4</b><span>مجالات: إخباري، استوديو، TVC، محتوى رقمي</span></div>
   </div>
 </div>
+
+<!-- REELS (shown when the dashboard has reels) -->
+<section class="sec reels-sec" id="reels" hidden>
+  <div class="wrap">
+    <div class="sh">
+      <div><div class="sh-n ltr">REELS · 9:16</div><h2>ريلز</h2><div class="sh-rule"></div></div>
+      <p>تصوير طولي لصنّاع المحتوى والمنصات الرقمية. اضغط على أي ريل حتى تشوفه بالصوت.</p>
+    </div>
+  </div>
+  <div class="reels-track" id="reels-track" role="list" tabindex="0" aria-label="الريلز"></div>
+  <div class="wrap reels-ctl">
+    <button type="button" class="rc-btn" data-dir="-1" aria-label="الريلز السابقة">→</button>
+    <button type="button" class="rc-btn" data-dir="1" aria-label="الريلز التالية">←</button>
+  </div>
+</section>
 
 <!-- WORKS -->
 <section class="sec" id="works">
   <div class="wrap">
-    <div class="sh rv">
+    <div class="sh">
       <div><div class="sh-n ltr">01 —</div><h2>الأعمال</h2><div class="sh-rule"></div></div>
       <div class="filters" role="group" aria-label="تصفية الأعمال" id="filters"></div>
     </div>
@@ -466,14 +519,14 @@ footer p{color:var(--muted);font-size:14px}
 <!-- ABOUT -->
 <section class="sec sec-alt" id="about">
   <div class="wrap">
-    <div class="sh rv"><div><div class="sh-n ltr">02 —</div><h2>عني</h2><div class="sh-rule"></div></div></div>
+    <div class="sh"><div><div class="sh-n ltr">02 —</div><h2>عني</h2><div class="sh-rule"></div></div></div>
     <div class="about">
       <figure class="shot">
         <div class="shot-frame" aria-hidden="true"><div class="vf"><i></i><i></i><i></i><i></i></div><span class="rec shot-rec">REC</span></div>
         <div class="shot-clip"><img class="shot-cut" src="assets/profile-cutout.webp" alt="المفتدى أحمد زيدان يصوّر بكاميرا على جيمبل" width="1102" height="1344" loading="lazy"></div>
         <div class="shot-af" aria-hidden="true"><span>AF</span><span class="af-bar"><i></i></span><span class="af-lock">LOCK</span></div>
       </figure>
-      <div class="rv">
+      <div>
         <p class="about-lead">مصوّر تلفزيوني بخبرة ميدانية منذ <em class="ltr">2021</em> في القنوات الفضائية العراقية، أعمل بين <em>الشارع</em> و<em>الاستوديو</em> بالكفاءة نفسها.</p>
         <p class="about-txt">من التصوير الإخباري الميداني وتغطية الأحداث والتظاهرات، إلى إدارة الكاميرات والإضاءة في استوديو البث المباشر، وصولاً إلى تصوير الإعلانات التجارية (TVC) ومحتوى صنّاع المحتوى على المنصات الرقمية. أتقن العمل على كاميرات Sony وعلى تشكيلة واسعة من المعدات، وأمتلك حسّاً بصرياً يحوّل الحدث إلى صورة قوية ومتوازنة تحت ضغط البث والمواعيد.</p>
         <p class="about-txt">دراستي للعلوم السياسية تمنحني فهماً أعمق للحدث الذي أصوّره، ولطبيعة العمل مع الشخصيات الرسمية.</p>
@@ -506,15 +559,15 @@ footer p{color:var(--muted);font-size:14px}
 <!-- EXPERIENCE -->
 <section class="sec" id="experience">
   <div class="wrap">
-    <div class="sh rv"><div><div class="sh-n ltr">03 —</div><h2>الخبرة العملية</h2><div class="sh-rule"></div></div></div>
+    <div class="sh"><div><div class="sh-n ltr">03 —</div><h2>الخبرة العملية</h2><div class="sh-rule"></div></div></div>
     <ol class="tl">
-      <li class="rv"><div class="tl-head"><h3>قناة هنا العراق</h3><span class="role">مصور تلفزيوني</span><span class="when ltr">2024 – 2026</span></div>
+      <li><div class="tl-head"><h3>قناة هنا العراق</h3><span class="role">مصور تلفزيوني</span><span class="when ltr">2024 – 2026</span></div>
         <p>تصوير البرامج والتغطيات الميدانية وحلقات الاستوديو، مع الحفاظ على جودة الصورة وتناسق الكادرات والالتزام بجداول البث.</p></li>
-      <li class="rv"><div class="tl-head"><h3>قناة الفلوجة</h3><span class="role">مصور تلفزيوني</span><span class="when">6 أشهر</span></div>
+      <li><div class="tl-head"><h3>قناة الفلوجة</h3><span class="role">مصور تلفزيوني</span><span class="when">6 أشهر</span></div>
         <p>تصوير المواد التلفزيونية والتغطيات والعمل ضمن فريق القناة، مع تجهيز المعدات والالتزام بمواعيد التسليم.</p></li>
-      <li class="rv"><div class="tl-head"><h3>قناة الديوان</h3><span class="role">مصور تلفزيوني</span><span class="when ltr">2021 – 2022</span></div>
+      <li><div class="tl-head"><h3>قناة الديوان</h3><span class="role">مصور تلفزيوني</span><span class="when ltr">2021 – 2022</span></div>
         <p>العمل على تصوير البرامج الحوارية والاجتماعية والتغطيات الخارجية ضمن فريق الإنتاج، وتجهيز المعدات والإضاءة قبل التصوير.</p></li>
-      <li class="rv"><div class="tl-head"><h3>صنّاع المحتوى على إنستغرام</h3><span class="role">محتوى بصري</span><span class="when">بالتوازي</span></div>
+      <li><div class="tl-head"><h3>صنّاع المحتوى على إنستغرام</h3><span class="role">محتوى بصري</span><span class="when">بالتوازي</span></div>
         <p>تصوير وإنتاج محتوى مرئي لعدد من صنّاع المحتوى بأسلوب عصري يناسب منصات التواصل الاجتماعي.</p></li>
     </ol>
   </div>
@@ -523,12 +576,12 @@ footer p{color:var(--muted);font-size:14px}
 <!-- SERVICES -->
 <section class="sec sec-alt" id="services">
   <div class="wrap">
-    <div class="sh rv"><div><div class="sh-n ltr">04 —</div><h2>مجالات التخصص</h2><div class="sh-rule"></div></div><p>أربعة مجالات، وعين واحدة على التفاصيل.</p></div>
+    <div class="sh"><div><div class="sh-n ltr">04 —</div><h2>مجالات التخصص</h2><div class="sh-rule"></div></div><p>أربعة مجالات، وعين واحدة على التفاصيل.</p></div>
     <div class="svc">
-      <article class="card rv"><span class="card-n ltr">01</span><div class="card-i"><svg><use href="#i-news"/></svg></div><h3>التصوير الإخباري الميداني</h3><p>تغطية الأحداث والتظاهرات والمؤتمرات من موقعها بسرعة ودقة، والتقاط اللقطة المناسبة في اللحظة المناسبة.</p></article>
-      <article class="card rv"><span class="card-n ltr">02</span><div class="card-i"><svg><use href="#i-studio"/></svg></div><h3>استوديو البث المباشر</h3><p>تشغيل كاميرات الاستوديو وضبط الكادر والحركة أثناء البث، مع توزيع الإضاءة بما يخدم شكل البرنامج وضيوفه.</p></article>
-      <article class="card rv"><span class="card-n ltr">03</span><div class="card-i"><svg><use href="#i-tvc"/></svg></div><h3>الإعلانات التجارية TVC</h3><p>تصوير المواد الإعلانية بعناية بالتفاصيل والإضاءة وحركة الكاميرا، باستخدام الجيمبل والعدسات المناسبة لصورة سينمائية.</p></article>
-      <article class="card rv"><span class="card-n ltr">04</span><div class="card-i"><svg><use href="#i-social"/></svg></div><h3>محتوى صنّاع المحتوى</h3><p>مقاطع ومحتوى إنستغرام بروح عصرية وإيقاع سريع، بأسلوب يناسب هوية صانع المحتوى ومنصته.</p></article>
+      <article class="card"><span class="card-n ltr">01</span><div class="card-i"><svg><use href="#i-news"/></svg></div><h3>التصوير الإخباري الميداني</h3><p>تغطية الأحداث والتظاهرات والمؤتمرات من موقعها بسرعة ودقة، والتقاط اللقطة المناسبة في اللحظة المناسبة.</p></article>
+      <article class="card"><span class="card-n ltr">02</span><div class="card-i"><svg><use href="#i-studio"/></svg></div><h3>استوديو البث المباشر</h3><p>تشغيل كاميرات الاستوديو وضبط الكادر والحركة أثناء البث، مع توزيع الإضاءة بما يخدم شكل البرنامج وضيوفه.</p></article>
+      <article class="card"><span class="card-n ltr">03</span><div class="card-i"><svg><use href="#i-tvc"/></svg></div><h3>الإعلانات التجارية TVC</h3><p>تصوير المواد الإعلانية بعناية بالتفاصيل والإضاءة وحركة الكاميرا، باستخدام الجيمبل والعدسات المناسبة لصورة سينمائية.</p></article>
+      <article class="card"><span class="card-n ltr">04</span><div class="card-i"><svg><use href="#i-social"/></svg></div><h3>محتوى صنّاع المحتوى</h3><p>مقاطع ومحتوى إنستغرام بروح عصرية وإيقاع سريع، بأسلوب يناسب هوية صانع المحتوى ومنصته.</p></article>
     </div>
   </div>
 </section>
@@ -536,9 +589,9 @@ footer p{color:var(--muted);font-size:14px}
 <!-- GEAR -->
 <section class="sec" id="gear">
   <div class="wrap">
-    <div class="sh rv"><div><div class="sh-n ltr">05 —</div><h2>المعدات والمهارات</h2><div class="sh-rule"></div></div></div>
+    <div class="sh"><div><div class="sh-n ltr">05 —</div><h2>المعدات والمهارات</h2><div class="sh-rule"></div></div></div>
     <div class="gear">
-      <div class="rv">
+      <div>
         <h3>المعدات التي أتقنها</h3>
         <ul class="kit">
           <li class="main"><b class="ltr">Sony</b><span>بمختلف فئاتها — التخصص الرئيسي</span></li>
@@ -549,7 +602,7 @@ footer p{color:var(--muted);font-size:14px}
           <li><b class="ltr">Rode</b><span>ميكروفونات وتسجيل الصوت</span></li>
         </ul>
       </div>
-      <div class="rv">
+      <div>
         <h3>مهارات إضافية</h3>
         <div class="chips">
           <span>إضاءة الاستوديو</span><span>كادرات بروتوكولية</span><span>تصوير تحت الضغط</span><span>العمل ضمن فريق بث</span><span>المونتاج السينمائي</span><span>محتوى البيانات الصحفية</span>
@@ -567,7 +620,7 @@ footer p{color:var(--muted);font-size:14px}
 <!-- CONTACT -->
 <section class="sec" id="contact" style="padding-top:0">
   <div class="wrap">
-    <div class="contact scene rv">
+    <div class="contact scene">
       <div class="vf" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       <div style="position:relative;z-index:2">
         <div class="rec">STANDBY</div>
@@ -601,6 +654,14 @@ footer p{color:var(--muted);font-size:14px}
 </footer>
 
 <a class="fab" data-wa href="#contact" aria-label="تواصل عبر واتساب"><svg><use href="#i-wa"/></svg></a>
+
+<div class="reelv" id="rv" role="dialog" aria-modal="true" aria-label="عرض الريل" hidden>
+  <div class="rv-top"><span class="rv-count ltr" id="rv-count"></span><button type="button" class="rv-x" id="rv-x" aria-label="إغلاق">✕</button></div>
+  <button type="button" class="rv-nav rv-prev" id="rv-prev" aria-label="الريل السابق">→</button>
+  <div class="rv-stage" id="rv-stage"></div>
+  <button type="button" class="rv-nav rv-next" id="rv-next" aria-label="الريل التالي">←</button>
+  <div class="rv-cap" id="rv-cap"></div>
+</div>
 
 <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="عرض العمل">
   <button class="lb-x" id="lb-x" aria-label="إغلاق">✕</button>
@@ -664,6 +725,9 @@ const WORKS = [
   // أماكن مؤقتة — بانتظار المادة
   { title: 'إعلان تجاري',           cat: 'tvc',      type: 'video', src: '' },
 ];
+
+/* الريلز (فيديو طولي 9:16) تنضاف من لوحة التحكم. هاي القائمة احتياط إذا ما وصل ملف البيانات */
+const REELS_INLINE = [];
 
 const CREDITS = {
   channels: ['قناة هنا العراق', 'قناة الفلوجة', 'قناة الديوان'],
@@ -751,6 +815,93 @@ const CREDITS = {
     $$('.work img', grid).forEach((img) => img.addEventListener('error', () => img.remove()));
   };
   renderWorks(WORKS);
+
+  // Reels (9:16): cards play muted while visible; tap opens a full-screen viewer with sound
+  const reelsSec = $('#reels'), track = $('#reels-track'), navReels = $('.nav-links a[href="#reels"]');
+  const saveData = !!(navigator.connection && navigator.connection.saveData);
+  let REELS = [];
+  const reelPoster = (r) => res(r.poster) || (r.type === 'youtube' ? `https://i.ytimg.com/vi/${ytId(r.src)}/hqdefault.jpg` : '');
+  const cardIO = 'IntersectionObserver' in window ? new IntersectionObserver((es) => es.forEach((e) => {
+    const v = e.target;
+    if (e.isIntersecting && $('#rv').hidden) {
+      if (!v.src) v.src = v.dataset.src;
+      v.play().catch(() => {});
+    } else if (!v.paused) v.pause();
+  }), { threshold: 0.6 }) : null;
+  const renderReels = (list) => {
+    REELS = (Array.isArray(list) ? list : []).filter((r) => r && r.src);
+    reelsSec.hidden = !REELS.length;
+    if (navReels) navReels.hidden = !REELS.length;
+    if (cardIO) cardIO.disconnect();
+    track.innerHTML = REELS.map((r, i) => {
+      const ig = r.type === 'instagram', poster = reelPoster(r);
+      const media = r.type === 'video'
+        ? `<video muted loop playsinline preload="none"${poster ? ` poster="${esc(poster)}"` : ''} data-src="${esc(res(r.src))}"></video>`
+        : poster ? `<img src="${esc(poster)}" alt="" loading="lazy">` : '';
+      const attrs = ig ? ` href="${esc(r.src)}" target="_blank" rel="noopener"` : ` type="button" data-r="${i}"`;
+      const label = (r.title || 'ريل') + (ig ? ' (إنستغرام)' : '');
+      return `<${ig ? 'a' : 'button'} class="reel" role="listitem"${attrs} aria-label="${esc(label)}">
+        <div class="scene"></div>${media}
+        <span class="reel-badge"><svg><use href="#${ig ? 'i-ig' : 'i-play'}"/></svg></span><span class="reel-tag">REEL</span>
+        <div class="reel-info">${r.title ? `<b>${esc(r.title)}</b>` : ''}${r.desc ? `<span>${esc(r.desc)}</span>` : ''}</div>
+      </${ig ? 'a' : 'button'}>`;
+    }).join('');
+    $$('img', track).forEach((img) => img.addEventListener('error', () => img.remove()));
+    if (cardIO && !reduce && !saveData) $$('video', track).forEach((v) => cardIO.observe(v));
+  };
+  $$('.rc-btn').forEach((b) => b.addEventListener('click', () => {
+    const card = $('.reel', track); if (!card) return;
+    // RTL: positive "next" moves the strip towards the left
+    track.scrollBy({ left: -(+b.dataset.dir) * (card.offsetWidth + 14) * 2, behavior: reduce ? 'auto' : 'smooth' });
+  }));
+
+  const rv = $('#rv'), rvStage = $('#rv-stage'), rvCap = $('#rv-cap'), rvCount = $('#rv-count');
+  let rvList = [], rvAt = 0, rvLast = null;
+  const showReel = (k) => {
+    rvAt = (k + rvList.length) % rvList.length;
+    const r = REELS[rvList[rvAt]];
+    rvStage.innerHTML = r.type === 'youtube'
+      ? `<iframe src="https://www.youtube-nocookie.com/embed/${ytId(r.src)}?autoplay=1&rel=0&playsinline=1&loop=1&playlist=${ytId(r.src)}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen title="${esc(r.title || 'ريل')}"></iframe>`
+      : `<video src="${esc(res(r.src))}"${reelPoster(r) ? ` poster="${esc(reelPoster(r))}"` : ''} controls autoplay playsinline loop></video>`;
+    rvCap.innerHTML = `${esc(r.title || '')}${r.desc ? `<small>${esc(r.desc)}</small>` : ''}`;
+    rvCount.textContent = `${rvAt + 1} / ${rvList.length}`;
+    $('#rv-prev').disabled = $('#rv-next').disabled = rvList.length < 2;
+  };
+  const openReel = (i) => {
+    rvList = REELS.map((r, j) => (r.type === 'instagram' ? -1 : j)).filter((j) => j >= 0);
+    rv.hidden = false; document.body.style.overflow = 'hidden';
+    $$('video', track).forEach((v) => v.pause());
+    showReel(Math.max(0, rvList.indexOf(i)));
+    $('#rv-x').focus();
+  };
+  const closeReel = () => {
+    rv.hidden = true; rvStage.innerHTML = ''; document.body.style.overflow = '';
+    if (rvLast) rvLast.focus();
+    // re-observe so the cards in view start playing again
+    if (cardIO && !reduce && !saveData) $$('video', track).forEach((v) => { cardIO.unobserve(v); cardIO.observe(v); });
+  };
+  track.addEventListener('click', (e) => { const c = e.target.closest('button.reel'); if (!c) return; rvLast = c; openReel(+c.dataset.r); });
+  $('#rv-x').addEventListener('click', closeReel);
+  $('#rv-next').addEventListener('click', () => showReel(rvAt + 1));
+  $('#rv-prev').addEventListener('click', () => showReel(rvAt - 1));
+  rv.addEventListener('click', (e) => { if (e.target === rv) closeReel(); });
+  addEventListener('keydown', (e) => {
+    if (rv.hidden) return;
+    if (e.key === 'Escape') closeReel();
+    if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') showReel(rvAt + 1);
+    if (e.key === 'ArrowUp' || e.key === 'ArrowRight') showReel(rvAt - 1);
+  });
+  let ty = null, tx = null;
+  rv.addEventListener('touchstart', (e) => { ty = e.touches[0].clientY; tx = e.touches[0].clientX; }, { passive: true });
+  rv.addEventListener('touchend', (e) => {
+    if (ty == null) return;
+    const dy = e.changedTouches[0].clientY - ty, dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dy) > 60 && Math.abs(dy) > Math.abs(dx)) showReel(rvAt + (dy < 0 ? 1 : -1));
+    else if (Math.abs(dx) > 60) showReel(rvAt + (dx > 0 ? 1 : -1));   // RTL: swipe right = next
+    ty = tx = null;
+  }, { passive: true });
+
+  renderReels(typeof REELS_INLINE !== 'undefined' ? REELS_INLINE : []);
   if (SITE.dataUrl) {
     fetch(SITE.dataUrl + '?v=' + Date.now(), { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
@@ -759,6 +910,7 @@ const CREDITS = {
         BASE = SITE.dataUrl.replace(/[^/]*$/, '');
         if (d.settings) applySettings(d.settings);
         if (Array.isArray(d.works) && d.works.length) renderWorks(d.works);
+        if (Array.isArray(d.reels)) renderReels(d.reels);
       })
       .catch(() => {});
   }

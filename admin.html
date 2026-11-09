@@ -94,6 +94,11 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
 .types span i{font-style:normal;font-size:20px}
 .types input:checked + span{border-color:var(--gold);background:rgba(226,178,76,.1);color:var(--gold)}
 .types input:focus-visible + span{outline:2px solid var(--gold)}
+.items.reels .item{grid-template-columns:54px 1fr auto}
+.items.reels .thumb{width:54px;aspect-ratio:9/16}
+.rprev{margin:14px auto 0;width:min(220px,62%);aspect-ratio:9/16;border-radius:10px;overflow:hidden;background:linear-gradient(135deg,var(--navy-2),var(--ink));position:relative;display:grid;place-items:center;color:var(--muted);font-size:13px;border:1px solid var(--line)}
+.rprev video,.rprev img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+.warn{color:var(--gold-soft)}
 .file-hidden{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
 .file-btn{margin:0;width:100%;cursor:pointer;font-size:14px}
 .file-hidden:focus-visible + .file-btn{outline:2px solid var(--gold);outline-offset:2px}
@@ -166,6 +171,12 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
     </div>
     <ul class="items" id="items"></ul>
 
+    <div class="list-head">
+      <div><h2>الريلز</h2><p class="hint">فيديو طولي 9:16. الأول بالقائمة يطلع أول شي.</p></div>
+      <button class="btn btn-gold" id="add-reel" type="button">+ إضافة ريل</button>
+    </div>
+    <ul class="items reels" id="reels"></ul>
+
     <div class="card">
       <h2>معلومات التواصل</h2>
       <label for="s-ig">حساب إنستغرام <span class="opt">(بدون @)</span></label>
@@ -220,6 +231,48 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
     <div class="sheet-acts">
       <button type="submit" class="btn btn-gold">تم</button>
       <button type="button" class="btn btn-line" id="f-cancel">إلغاء</button>
+    </div>
+  </form>
+</div>
+
+<!-- REEL EDITOR -->
+<div class="sheet" id="rsheet" hidden>
+  <form class="sheet-box" id="rform" novalidate>
+    <div class="sheet-head"><h2 id="rsheet-title">إضافة ريل</h2><button type="button" class="ic" id="rsheet-x" aria-label="إغلاق">✕</button></div>
+
+    <label>مصدر الريل</label>
+    <div class="types">
+      <label><input type="radio" name="rtype" value="video"><span><i>🎬</i>فيديو من موبايلك</span></label>
+      <label><input type="radio" name="rtype" value="youtube"><span><i>▶</i>يوتيوب شورتس</span></label>
+      <label><input type="radio" name="rtype" value="instagram"><span><i>◎</i>رابط إنستغرام</span></label>
+    </div>
+
+    <div id="r-video-wrap">
+      <label for="r-video">الفيديو <span class="opt">(MP4 طولي، أقل من 45 ميگا)</span></label>
+      <input id="r-video" type="file" accept="video/mp4,video/quicktime,video/webm,video/*" class="file-hidden">
+      <label for="r-video" class="btn btn-line file-btn">🎬 اختار فيديو من الموبايل</label>
+      <p class="hint" id="r-video-info"></p>
+    </div>
+    <div id="r-link-wrap" hidden>
+      <label for="r-link" id="r-link-label">الرابط</label>
+      <input id="r-link" class="ltr" type="url" spellcheck="false">
+    </div>
+
+    <div class="rprev" id="r-preview">بدون معاينة</div>
+
+    <label for="r-poster">صورة الغلاف <span class="opt" id="r-poster-opt"></span></label>
+    <input id="r-poster" type="file" accept="image/*" class="file-hidden">
+    <label for="r-poster" class="btn btn-line file-btn">🖼 اختار صورة غلاف</label>
+
+    <label for="r-title">العنوان <span class="opt">(اختياري)</span></label>
+    <input id="r-title" placeholder="مثلاً: ريل لمطعم في بغداد">
+    <label for="r-desc">سطر تفاصيل <span class="opt">(اختياري)</span></label>
+    <input id="r-desc" placeholder="لصانع المحتوى ...">
+
+    <p class="err" id="r-err" hidden></p>
+    <div class="sheet-acts">
+      <button type="submit" class="btn btn-gold">تم</button>
+      <button type="button" class="btn btn-line" id="r-cancel">إلغاء</button>
     </div>
   </form>
 </div>
@@ -280,6 +333,7 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
     if (e.status === 401) return 'الرمز غلط أو منتهي. سوّي رمز جديد والصقه.';
     if (e.status === 403) return 'الرمز ما عنده صلاحية كتابة. تأكد إنك اخترت Contents: Read and write.';
     if (e.status === 404) return 'ما لگيت المستودع. تأكد إن الرمز مربوط بمستودع موقعك، وإن اسم الحساب والمستودع صحيح (من "إعدادات المستودع").';
+    if (e.status === 413) return 'الفيديو حجمه كبير على GitHub. صدّره بحجم أصغر (1080p) وجرّب مرة ثانية.';
     if (e.status === 409 || e.status === 422) return 'صار تعديل على الموقع من مكان ثاني. حدّث الصفحة وأعد التعديل.';
     return 'ما گدرت أتصل بـ GitHub. تأكد من الإنترنت وجرّب مرة ثانية.';
   };
@@ -291,6 +345,7 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
     data = JSON.parse(new TextDecoder().decode(bytesFromB64(f.content)));
     data.settings = data.settings || {};
     data.works = Array.isArray(data.works) ? data.works : [];
+    data.reels = Array.isArray(data.reels) ? data.reels : [];
   };
 
   /* ---------- UI ---------- */
@@ -323,7 +378,7 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
     $('#s-ig').value = data.settings.instagram || '';
     $('#s-wa').value = data.settings.whatsapp || '';
     $('#repo-line').textContent = `${cfg.owner}/${cfg.repo}`;
-    renderList(); setStatus('كل شي محفوظ'); dirty = false; $('#save').disabled = true;
+    renderList(); renderReels(); setStatus('كل شي محفوظ'); dirty = false; $('#save').disabled = true;
   };
   const showLogin = (msg) => {
     $('#app').hidden = true; $('#savebar').hidden = true; $('#login').hidden = false;
@@ -476,6 +531,171 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
   $('#sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') closeEditor(); });
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#sheet').hidden) closeEditor(); });
 
+  /* ---------- reels ---------- */
+  const MAX_MB = 45;
+  const reelPoster = (r) => r._posterPreview || resolve(r.poster) || (r.type === 'youtube' && ytId(r.src) ? `https://i.ytimg.com/vi/${ytId(r.src)}/hqdefault.jpg` : '');
+  const renderReels = () => {
+    const ul = $('#reels');
+    if (!data.reels.length) { ul.innerHTML = '<li class="empty">ما كو ريلز بعد. اضغط "+ إضافة ريل" وارفع فيديو من موبايلك.</li>'; return; }
+    ul.innerHTML = data.reels.map((r, i) => {
+      const t = reelPoster(r);
+      const kind = r.type === 'video' ? 'فيديو' : r.type === 'youtube' ? 'شورتس' : 'إنستغرام';
+      return `<li class="item">
+        <div class="thumb">${t ? `<img src="${esc(t)}" alt="" loading="lazy">` : '9:16'}</div>
+        <div class="meta"><b>${esc(r.title || 'ريل بدون عنوان')}</b><span>${esc(r.desc || '')}</span>
+          <div class="tags"><span class="tag">${kind}</span>${r._video ? '<span class="tag new">فيديو جديد</span>' : ''}</div></div>
+        <div class="acts">
+          <button class="ic" type="button" data-act="up" data-i="${i}" aria-label="لفوق" ${i === 0 ? 'disabled' : ''}>↑</button>
+          <button class="ic" type="button" data-act="edit" data-i="${i}" aria-label="تعديل">✎</button>
+          <button class="ic" type="button" data-act="down" data-i="${i}" aria-label="لجوه" ${i === data.reels.length - 1 ? 'disabled' : ''}>↓</button>
+          <button class="ic del" type="button" data-act="del" data-i="${i}" aria-label="حذف">🗑</button>
+        </div>
+      </li>`;
+    }).join('');
+    ul.querySelectorAll('.thumb img').forEach((img) => img.addEventListener('error', () => img.remove()));
+  };
+  let rArmed = null;
+  $('#reels').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-act]'); if (!b) return;
+    const i = +b.dataset.i, act = b.dataset.act, R = data.reels;
+    if (act === 'up' && i > 0) { [R[i - 1], R[i]] = [R[i], R[i - 1]]; markDirty(); renderReels(); }
+    if (act === 'down' && i < R.length - 1) { [R[i + 1], R[i]] = [R[i], R[i + 1]]; markDirty(); renderReels(); }
+    if (act === 'edit') openReelEditor(i);
+    if (act === 'del') {
+      if (rArmed === i) { R.splice(i, 1); rArmed = null; markDirty(); renderReels(); return; }
+      rArmed = i; renderReels();
+      const btn = $(`#reels button[data-act="del"][data-i="${i}"]`);
+      btn.classList.add('armed'); btn.textContent = 'تأكيد الحذف';
+      setTimeout(() => { if (rArmed === i) { rArmed = null; renderReels(); } }, 3500);
+    }
+  });
+
+  // First frame of a video as a JPEG cover
+  const posterFromVideo = (file) => new Promise((ok, bad) => {
+    const url = URL.createObjectURL(file), v = document.createElement('video');
+    let done = false;
+    const fail = () => { if (!done) { done = true; URL.revokeObjectURL(url); bad(new Error('decode')); } };
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.addEventListener('loadeddata', () => { v.currentTime = Math.min(0.6, (v.duration || 1) / 2); });
+    v.addEventListener('seeked', () => {
+      if (done || !v.videoWidth) return fail();
+      const k = Math.min(1, 1280 / Math.max(v.videoWidth, v.videoHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.round(v.videoWidth * k); c.height = Math.round(v.videoHeight * k);
+      c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+      c.toBlob((b) => { done = true; URL.revokeObjectURL(url); b ? ok({ blob: b, w: v.videoWidth, h: v.videoHeight }) : bad(new Error('encode')); }, 'image/jpeg', 0.85);
+    });
+    v.addEventListener('error', fail);
+    setTimeout(fail, 15000);
+    v.src = url; v.load();
+  });
+
+  let rEditing = -1, rDraft = null;
+  const rTypeVal = () => (document.querySelector('input[name="rtype"]:checked') || {}).value || 'video';
+  const rErr = (m) => { const e = $('#r-err'); e.textContent = m; e.hidden = !m; };
+  const rPaint = () => {
+    const t = rTypeVal();
+    const link = $('#r-link').value;
+    const poster = rDraft._posterPreview || resolve(rDraft.poster) || (t === 'youtube' && ytId(link) ? `https://i.ytimg.com/vi/${ytId(link)}/hqdefault.jpg` : '');
+    const vid = t === 'video' ? (rDraft._videoPreview || (rDraft.type === 'video' ? resolve(rDraft.src) : '')) : '';
+    $('#r-preview').innerHTML = vid ? `<video src="${esc(vid)}"${poster ? ` poster="${esc(poster)}"` : ''} muted playsinline controls preload="metadata"></video>`
+      : poster ? `<img src="${esc(poster)}" alt="">` : 'بدون معاينة';
+  };
+  const rSync = () => {
+    const t = rTypeVal();
+    $('#r-video-wrap').hidden = t !== 'video';
+    $('#r-link-wrap').hidden = t === 'video';
+    $('#r-link-label').textContent = t === 'youtube' ? 'رابط الشورتس من يوتيوب' : 'رابط الريل من إنستغرام';
+    $('#r-link').placeholder = t === 'youtube' ? 'https://youtube.com/shorts/...' : 'https://www.instagram.com/reel/...';
+    $('#r-poster-opt').textContent = t === 'video' ? '(تطلع بروحها من الفيديو، وتگدر تغيّرها)' : t === 'instagram' ? '(مطلوبة: سكرين شوت من الريل)' : '(اختياري)';
+    rPaint();
+  };
+  const openReelEditor = (i) => {
+    rEditing = i;
+    const r = i >= 0 ? data.reels[i] : { type: 'video', src: '' };
+    rDraft = { ...r };
+    $('#rsheet-title').textContent = i >= 0 ? 'تعديل الريل' : 'إضافة ريل';
+    document.querySelector(`input[name="rtype"][value="${['video', 'youtube', 'instagram'].includes(r.type) ? r.type : 'video'}"]`).checked = true;
+    $('#r-link').value = r.type === 'video' ? '' : (r.src || '');
+    $('#r-title').value = r.title || '';
+    $('#r-desc').value = r.desc || '';
+    $('#r-video').value = ''; $('#r-poster').value = '';
+    $('#r-video-info').textContent = r.type === 'video' && r.src ? 'الفيديو الحالي محفوظ. اختار فيديو ثاني إذا تريد تبدله.' : '';
+    $('#r-video-info').className = 'hint';
+    rErr('');
+    rSync();
+    $('#rsheet').hidden = false; document.body.style.overflow = 'hidden';
+  };
+  const closeReelEditor = () => { $('#rsheet').hidden = true; document.body.style.overflow = ''; rDraft = null; rEditing = -1; };
+  $('#add-reel').addEventListener('click', () => openReelEditor(-1));
+  $('#r-cancel').addEventListener('click', closeReelEditor);
+  $('#rsheet-x').addEventListener('click', closeReelEditor);
+  $('#rsheet').addEventListener('click', (e) => { if (e.target.id === 'rsheet') closeReelEditor(); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#rsheet').hidden) closeReelEditor(); });
+  document.querySelectorAll('input[name="rtype"]').forEach((r) => r.addEventListener('change', rSync));
+  $('#r-link').addEventListener('input', rPaint);
+
+  $('#r-video').addEventListener('change', async () => {
+    const f = $('#r-video').files[0]; if (!f) return;
+    const info = $('#r-video-info'); rErr('');
+    const mb = f.size / 1048576;
+    if (mb > MAX_MB) {
+      $('#r-video').value = '';
+      info.textContent = '';
+      return rErr(`حجم الفيديو ${mb.toFixed(0)} ميگا، والحد ${MAX_MB} ميگا. صدّره بدقة 1080p من CapCut أو أي برنامج مونتاج وجرّب مرة ثانية.`);
+    }
+    if (rDraft._videoPreview) URL.revokeObjectURL(rDraft._videoPreview);
+    rDraft._video = f; rDraft._videoPreview = URL.createObjectURL(f);
+    info.className = 'hint';
+    info.textContent = `${f.name} · ${mb.toFixed(1)} ميگا · جاري تجهيز الغلاف…`;
+    rPaint();
+    const iphoneMov = /quicktime/.test(f.type) || /\.mov$/i.test(f.name);
+    try {
+      const p = await posterFromVideo(f);
+      if (!rDraft || rDraft._video !== f) return;
+      if (!rDraft._posterCustom) {
+        if (rDraft._posterPreview) URL.revokeObjectURL(rDraft._posterPreview);
+        rDraft._poster = p.blob; rDraft._posterPreview = URL.createObjectURL(p.blob);
+      }
+      const notes = [`${f.name} · ${mb.toFixed(1)} ميگا · ${p.w}×${p.h}`];
+      if (p.w > p.h) notes.push('⚠️ الفيديو عرضي مو طولي، راح ينقص من الجوانب.');
+      if (iphoneMov) notes.push('⚠️ فيديوهات الآيفون (MOV) ممكن ما تشتغل على بعض أجهزة الأندرويد. الأضمن تصدّره MP4.');
+      info.textContent = notes.join(' ');
+      info.className = notes.length > 1 ? 'hint warn' : 'hint';
+      rPaint();
+    } catch {
+      info.className = 'hint warn';
+      info.textContent = `${f.name} · ${mb.toFixed(1)} ميگا · ⚠️ المتصفح ما گدر يقرا الفيديو. الأفضل تصدّره MP4 (H.264)، وارفع صورة غلاف بنفسك.`;
+    }
+  });
+  $('#r-poster').addEventListener('change', async () => {
+    const f = $('#r-poster').files[0]; if (!f) return;
+    try {
+      const blob = await shrink(f);
+      if (rDraft._posterPreview) URL.revokeObjectURL(rDraft._posterPreview);
+      rDraft._poster = blob; rDraft._posterPreview = URL.createObjectURL(blob); rDraft._posterCustom = true;
+      rPaint();
+    } catch { rErr('ما گدرت أقرا الصورة. جرّب صورة ثانية (JPG أو PNG).'); }
+  });
+  $('#rform').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const t = rTypeVal(), link = $('#r-link').value.trim();
+    if (t === 'video' && !rDraft._video && !(rDraft.type === 'video' && rDraft.src)) return rErr('اختار الفيديو أول.');
+    if (t === 'youtube' && !ytId(link)) return rErr('الرابط مو رابط يوتيوب صحيح. انسخه من زر "مشاركة" بالشورتس.');
+    if (t === 'instagram' && !/instagram\.com\//i.test(link)) return rErr('الرابط مو رابط إنستغرام. انسخه من زر "مشاركة" بالريل.');
+    if (t === 'instagram' && !rDraft._poster && !rDraft.poster) return rErr('ريل الإنستغرام يحتاج صورة غلاف. خذ سكرين شوت من الريل وارفعها.');
+    const r = { type: t, src: t === 'video' ? (rDraft.type === 'video' ? rDraft.src || '' : '') : t === 'youtube' ? `https://www.youtube.com/shorts/${ytId(link)}` : link };
+    const title = $('#r-title').value.trim(), desc = $('#r-desc').value.trim();
+    if (title) r.title = title;
+    if (desc) r.desc = desc;
+    const sameSource = rEditing >= 0 && data.reels[rEditing].type === t && (t === 'video' ? !rDraft._video : data.reels[rEditing].src === r.src);
+    if (rDraft.poster && sameSource) r.poster = rDraft.poster;
+    if (rDraft._video) { r._video = rDraft._video; r._videoPreview = rDraft._videoPreview; }
+    if (rDraft._poster) { r._poster = rDraft._poster; r._posterPreview = rDraft._posterPreview; }
+    if (rEditing >= 0) data.reels[rEditing] = r; else data.reels.unshift(r);
+    closeReelEditor(); markDirty(); renderReels();
+  });
+
   /* ---------- save & publish ---------- */
   $('#save').addEventListener('click', async () => {
     if (busy || !dirty) return;
@@ -492,14 +712,36 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
         if (w.type === 'image') w.src = name;
         delete w._file;
       }
+      const reelFiles = data.reels.filter((r) => r._video || r._poster);
+      let k = 0;
+      for (const r of reelFiles) {
+        k++;
+        const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+        if (r._video) {
+          setStatus(`جاري رفع الفيديو ${k} من ${reelFiles.length}… لا تسد الصفحة`);
+          const ext = ((r._video.name.match(/\.(mp4|mov|webm|m4v)$/i) || [, 'mp4'])[1]).toLowerCase();
+          const name = `assets/reels/${id}.${ext}`;
+          await api(`/contents/${name}`, { method: 'PUT', body: JSON.stringify({ message: `رفع ريل: ${r.title || id}`, content: b64FromBytes(new Uint8Array(await r._video.arrayBuffer())), branch: cfg.branch }) });
+          r.src = name;
+          delete r._video;
+        }
+        if (r._poster) {
+          setStatus(`جاري رفع الغلاف ${k} من ${reelFiles.length}…`);
+          const name = `assets/reels/${id}.jpg`;
+          await api(`/contents/${name}`, { method: 'PUT', body: JSON.stringify({ message: `غلاف ريل: ${r.title || id}`, content: b64FromBytes(new Uint8Array(await r._poster.arrayBuffer())), branch: cfg.branch }) });
+          r.poster = name;
+          delete r._poster;
+        }
+      }
       setStatus('جاري النشر…');
-      const clean = { settings: data.settings, works: data.works.map(({ _file, _preview, ...w }) => w) };
+      const strip = (o) => Object.fromEntries(Object.entries(o).filter(([key]) => !key.startsWith('_')));
+      const clean = { settings: data.settings, works: data.works.map(strip), reels: data.reels.map(strip) };
       const text = JSON.stringify(clean, null, 2) + '\n';
       const res = await api(`/contents/${cfg.path}`, { method: 'PUT', body: JSON.stringify({ message: 'تحديث الأعمال من لوحة التحكم', content: b64FromBytes(new TextEncoder().encode(text)), sha, branch: cfg.branch }) });
       sha = res.content.sha;
       dirty = false;
       setStatus('تم النشر ✅ الموقع يتحدث خلال دقائق قليلة (حتى 5 دقائق)', 'ok');
-      renderList();
+      renderList(); renderReels();
     } catch (e) {
       setStatus(explain(e), 'bad');
       $('#save').disabled = false;
