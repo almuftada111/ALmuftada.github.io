@@ -81,13 +81,13 @@
   "reels": [
     {
       "type": "video",
-      "src": "assets/reels/mw981qn5-ptxl.mp4",
-      "poster": "assets/reels/mw981qn5-ptxl.jpg"
+      "src": "assets/reels/mw93o5zo-bsd0.mp4",
+      "poster": "assets/reels/mw93o5zo-bsd0.jpg"
     },
     {
       "type": "video",
-      "src": "assets/reels/mw93o5zo-bsd0.mp4",
-      "poster": "assets/reels/mw93o5zo-bsd0.jpg"
+      "src": "assets/reels/mw981qn5-ptxl.mp4",
+      "poster": "assets/reels/mw981qn5-ptxl.jpg"
     }
   ]
 }
