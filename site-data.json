@@ -78,5 +78,11 @@
       "desc": "بغداد، مول المنصور · تقديم إيناس الفتلاوي"
     }
   ],
-  "reels": []
+  "reels": [
+    {
+      "type": "video",
+      "src": "assets/reels/mw93o5zo-bsd0.mp4",
+      "poster": "assets/reels/mw93o5zo-bsd0.jpg"
+    }
+  ]
 }
