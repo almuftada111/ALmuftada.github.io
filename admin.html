@@ -226,6 +226,7 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
     <input id="f-desc" placeholder="بغداد، شارع المتنبي · تقديم ...">
 
     <label class="check"><input type="checkbox" id="f-big"> اعرضه كبير بالموقع</label>
+    <label class="check"><input type="checkbox" id="f-tall"> اعرضه طولي 9:16 (للريلز والصور الطولية)</label>
 
     <p class="err" id="f-err" hidden></p>
     <div class="sheet-acts">
@@ -385,7 +386,7 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
       return `<li class="item${w.src ? '' : ' ghost'}">
         <div class="thumb">${t ? `<img src="${esc(t)}" alt="" loading="lazy">` : 'بدون صورة'}</div>
         <div class="meta"><b>${esc(w.title)}</b><span>${esc([CATS[w.cat], w.channel].filter(Boolean).join(' · '))}</span>
-          <div class="tags"><span class="tag">${kind}</span>${w.big ? '<span class="tag gold">كبير</span>' : ''}${w.src ? '' : '<span class="tag">مؤقت (SOON)</span>'}${w._file ? '<span class="tag new">صورة جديدة</span>' : ''}</div></div>
+          <div class="tags"><span class="tag">${kind}</span>${w.tall ? '<span class="tag gold">طولي 9:16</span>' : w.big ? '<span class="tag gold">كبير</span>' : ''}${w.src ? '' : '<span class="tag">مؤقت (SOON)</span>'}${w._file ? '<span class="tag new">صورة جديدة</span>' : ''}</div></div>
         <div class="acts">
           <button class="ic" type="button" data-act="up" data-i="${i}" aria-label="لفوق" ${i === 0 ? 'disabled' : ''}>↑</button>
           <button class="ic" type="button" data-act="edit" data-i="${i}" aria-label="تعديل">✎</button>
@@ -465,6 +466,12 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
     $('#f-file-label').firstChild.textContent = t === 'image' ? 'الصورة ' : 'صورة الغلاف ';
     paintPreview();
   };
+  // a card is either big (wide 2×2) or tall (9:16), not both; Instagram reels start as tall
+  $('#f-tall').addEventListener('change', () => { if ($('#f-tall').checked) $('#f-big').checked = false; });
+  $('#f-big').addEventListener('change', () => { if ($('#f-big').checked) $('#f-tall').checked = false; });
+  document.querySelectorAll('input[name="type"]').forEach((r) => r.addEventListener('change', () => {
+    if (editing < 0 && typeVal() === 'instagram') { $('#f-tall').checked = true; $('#f-big').checked = false; }
+  }));
   const paintPreview = () => {
     const t = draft._preview || resolve(draft.thumb || (typeVal() === 'image' ? draft.src : '')) ||
       (typeVal() === 'youtube' && ytId($('#f-link').value) ? `https://i.ytimg.com/vi/${ytId($('#f-link').value)}/hqdefault.jpg` : '');
@@ -482,7 +489,8 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
     $('#f-cat').value = CATS[w.cat] ? w.cat : 'programs';
     $('#f-channel').value = w.channel || '';
     $('#f-desc').value = w.desc || '';
-    $('#f-big').checked = !!w.big;
+    $('#f-big').checked = !!w.big && !w.tall;
+    $('#f-tall').checked = !!w.tall;
     $('#f-file').value = '';
     $('#f-err').hidden = true;
     syncType();
@@ -540,7 +548,8 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
     const ch = $('#f-channel').value.trim(), desc = $('#f-desc').value.trim();
     if (ch) w.channel = ch;
     if (desc) w.desc = desc;
-    if ($('#f-big').checked) w.big = true;
+    if ($('#f-tall').checked) w.tall = true;
+    else if ($('#f-big').checked) w.big = true;
     // keep an existing cover unless the video link changed (an old YouTube cover would no longer match)
     const linkChanged = editing >= 0 && data.works[editing].src !== w.src && t !== 'image';
     if (draft.thumb && !(linkChanged && t === 'youtube')) w.thumb = draft.thumb;

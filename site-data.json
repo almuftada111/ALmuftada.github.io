@@ -5,6 +5,15 @@
   },
   "works": [
     {
+      "title": "محتوى إنستغرام",
+      "cat": "social",
+      "channel": "انستجرام",
+      "type": "instagram",
+      "src": "https://www.instagram.com/reel/DZaTABAM4Bc/?psln=MW00Yjh1cXF5Z2J0Mw==",
+      "tall": true,
+      "thumb": "assets/works/mw98c5vk-cxwx.jpg"
+    },
+    {
       "title": "العبها صح",
       "cat": "programs",
       "channel": "هنا العراق",
@@ -70,12 +79,6 @@
     }
   ],
   "reels": [
-    {
-      "type": "instagram",
-      "src": "https://www.instagram.com/reel/DZaTABAM4Bc/?psln=MW00Yjh1cXF5Z2J0Mw==",
-      "title": "محتوى إنستغرام",
-      "poster": "assets/works/mw98c5vk-cxwx.jpg"
-    },
     {
       "type": "video",
       "src": "assets/reels/mw93o5zo-bsd0.mp4",

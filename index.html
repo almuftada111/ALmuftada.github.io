@@ -167,9 +167,12 @@ section{scroll-margin-top:var(--nav-h)}
 .filters button{height:40px;padding:0 18px;border:1px solid var(--line);border-radius:40px;font-family:var(--f-head);font-size:14px;color:rgba(244,241,234,.75);transition:.2s}
 .filters button:hover{border-color:rgba(226,178,76,.6);color:var(--paper)}
 .filters button[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:600}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;grid-auto-flow:row dense}
+/* rows are fixed at one 16:10 card height so the big (2×2) and tall 9:16 (1×3) cards keep their shape */
+#works .wrap{container-type:inline-size}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;grid-auto-flow:row dense;grid-auto-rows:calc((100cqi - 36px) / 3 * .625)}
 .work{position:relative;aspect-ratio:16/10;overflow:hidden;border-radius:3px;background:var(--navy);isolation:isolate}
 .work.big{grid-column:span 2;grid-row:span 2;aspect-ratio:auto}
+.work.tall{grid-row:span 3;aspect-ratio:auto}   /* 9:16 card: one column, three rows */
 .work.hide{display:none}
 .work img,.work video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .8s cubic-bezier(.2,.7,.2,1)}
 .work .scene{position:absolute;inset:0;transition:transform .8s cubic-bezier(.2,.7,.2,1)}
@@ -399,7 +402,7 @@ footer p{color:var(--muted);font-size:14px}
   .nav.open .nav-links a{padding:13px 0;border-bottom:1px solid var(--line)}
   .nav.open .nav-links a.on::after{display:none}
   .nav.open .nav-cta{display:inline-flex;order:4;margin:14px 0 0;width:100%}
-  .grid{grid-template-columns:1fr 1fr}
+  .grid{grid-template-columns:1fr 1fr;grid-auto-rows:calc((100cqi - 18px) / 2 * .625)}
   .about{grid-template-columns:1fr}
   .shot{width:min(320px,74vw);margin:16% auto 0}
   .gear{grid-template-columns:1fr}
@@ -414,8 +417,9 @@ footer p{color:var(--muted);font-size:14px}
   .stats .wrap{grid-template-columns:1fr 1fr;padding:0}
   .stat{padding:26px var(--gutter);border-bottom:1px solid var(--line)}
   .stat:nth-child(2n){border-left:0}
-  .grid{grid-template-columns:1fr}
+  .grid{grid-template-columns:1fr;grid-auto-rows:auto}
   .work.big{grid-column:auto;grid-row:auto;aspect-ratio:16/10}
+  .work.tall{grid-row:auto;aspect-ratio:9/16;width:min(100%,380px);justify-self:center}
   .svc{grid-template-columns:1fr}
   .kit{grid-template-columns:1fr}
   .facts{grid-template-columns:1fr}
@@ -826,12 +830,13 @@ const CREDITS = {
       const thumb = res(w.thumb || (w.type === 'image' ? w.src : '')) || (ytThumb ? `https://i.ytimg.com/vi/${ytId(w.src)}/hqdefault.jpg` : '');
       const media = `<div class="scene"></div>` + (thumb ? `<img src="${esc(thumb)}" alt="" loading="lazy">`
         : has && w.type === 'video' ? `<video src="${esc(res(w.src))}#t=0.5" muted playsinline preload="metadata"></video>` : '');
-      const linkOut = has && (ig || (w.type === 'youtube' && !SITE.inlineVideo));
+      // Instagram works open in the 9:16 viewer inside the site
+      const linkOut = has && w.type === 'youtube' && !SITE.inlineVideo;
       const tag = !has ? 'div' : linkOut ? 'a' : 'button';
       const attrs = !has ? '' : linkOut
-        ? ` href="${esc(ig ? w.src : ytUrl(w.src))}" target="_blank" rel="noopener" aria-label="${ig ? 'شاهد على إنستغرام' : 'شاهد على يوتيوب'}: ${esc(w.title)}"`
+        ? ` href="${esc(ytUrl(w.src))}" target="_blank" rel="noopener" aria-label="شاهد على يوتيوب: ${esc(w.title)}"`
         : ` type="button" aria-label="عرض: ${esc(w.title)}"`;
-      const cls = `work${w.big ? ' big' : ''}${w.type === 'youtube' && w.thumb ? ' tv' : ''}${ytThumb ? ' ythq' : ''}`;
+      const cls = `work${w.tall ? ' tall' : w.big ? ' big' : ''}${w.type === 'youtube' && w.thumb ? ' tv' : ''}${ytThumb ? ' ythq' : ''}`;
       return `<${tag} class="${cls}" data-cat="${esc(w.cat)}" data-i="${i}" data-h="${i % 4}"${attrs}>
         ${media}<div class="vf"><i></i><i></i><i></i><i></i></div>
         ${w.type !== 'image' ? `<span class="work-play"><svg><use href="#${ig ? 'i-ig' : 'i-play'}"/></svg></span>` : ''}
@@ -991,10 +996,10 @@ const CREDITS = {
 
   // Full-screen viewer (with sound); swipe up/down or use the arrows to move between reels
   const rv = $('#rv'), rvStage = $('#rv-stage'), rvCap = $('#rv-cap'), rvCount = $('#rv-count');
-  let rvList = [], rvAt = 0;
+  let rvList = [], rvAt = 0, rvFromSlider = false, rvReturn = null;
   const showReel = (k) => {
     rvAt = (k + rvList.length) % rvList.length;
-    const r = REELS[rvList[rvAt]];
+    const r = rvList[rvAt];
     // Own minimal controls instead of the browser's (no download / save menu)
     rvStage.classList.toggle('is-ig', r.type === 'instagram');
     rvStage.innerHTML = r.type === 'instagram'
@@ -1027,19 +1032,21 @@ const CREDITS = {
     rvCount.textContent = `${rvAt + 1} / ${rvList.length}`;
     $('#rv-prev').disabled = $('#rv-next').disabled = rvList.length < 2;
   };
-  const openReel = (i) => {
-    rvList = REELS.map((r, j) => j);
+  // The viewer shows a list of items: the whole slider, or a single work from the grid
+  const openItems = (items, start, from) => {
+    rvList = items; rvFromSlider = items === REELS; rvReturn = from || null;
     clearTimeout(advTimer);
     cards.forEach((c) => { const v = $('video', c); if (v) v.pause(); });
     rv.hidden = false; document.body.style.overflow = 'hidden';
-    showReel(Math.max(0, rvList.indexOf(i)));
+    showReel(start);
     $('#rv-x').focus();
   };
+  const openReel = (i) => openItems(REELS, i, cards[i]);
   const closeReel = () => {
     rv.hidden = true; rvStage.innerHTML = ''; document.body.style.overflow = '';
-    const cur = rvList[rvAt];
-    if (cur != null && cur !== active) { active = cur; layout(); }
-    if (cards[active]) cards[active].focus({ preventScroll: true });
+    if (rvFromSlider && rvAt !== active) { active = rvAt; layout(); }
+    const back = rvFromSlider ? cards[active] : rvReturn;
+    if (back) back.focus({ preventScroll: true });
     playActive();
   };
   $('#rv-x').addEventListener('click', closeReel);
@@ -1091,6 +1098,7 @@ const CREDITS = {
   grid.addEventListener('click', (e) => {
     const el = e.target.closest('button.work'); if (!el) return;
     const w = LIST[+el.dataset.i]; last = el;
+    if (w.type === 'instagram') { openItems([w], 0, el); return; }
     lbm.innerHTML = w.type === 'youtube' ? `<iframe src="https://www.youtube-nocookie.com/embed/${ytId(w.src)}?autoplay=1&rel=0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen title="${esc(w.title)}"></iframe>`
       : w.type === 'video' ? `<video src="${esc(res(w.src))}" controls autoplay playsinline disablepictureinpicture controlslist="nodownload noplaybackrate" oncontextmenu="return false"></video>`
       : `<img src="${esc(res(w.src))}" alt="${esc(w.title)}">`;
