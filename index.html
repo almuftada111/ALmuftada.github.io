@@ -231,6 +231,16 @@ button.work,a.work{display:block;cursor:pointer;text-align:right;width:100%;font
 .reelv{position:fixed;inset:0;z-index:120;background:rgba(5,6,9,.97);display:flex;align-items:center;justify-content:center;padding:calc(56px + env(safe-area-inset-top,0px)) 16px calc(70px + env(safe-area-inset-bottom,0px));touch-action:pan-x}
 .rv-stage{height:100%;max-height:860px;aspect-ratio:9/16;max-width:100%;border-radius:12px;overflow:hidden;background:#000;position:relative}
 .rv-stage video,.rv-stage iframe{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border:0;background:#000}
+.rv-stage,.reels-stage{-webkit-touch-callout:none}
+.rv-stage video{pointer-events:none}
+.rv-tap{position:absolute;inset:0;z-index:2;cursor:pointer}
+.rv-paused{position:absolute;left:50%;top:50%;z-index:3;width:72px;height:72px;margin:-36px 0 0 -36px;border-radius:50%;display:grid;place-items:center;background:rgba(11,13,18,.55);border:1px solid rgba(244,241,234,.3);backdrop-filter:blur(6px);opacity:0;transition:opacity .2s;pointer-events:none}
+.rv-paused svg{width:26px;height:26px;margin-left:4px}
+.rv-stage.is-paused .rv-paused{opacity:1}
+.rv-snd{position:absolute;top:12px;left:12px;z-index:4;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:rgba(11,13,18,.55);border:1px solid rgba(244,241,234,.3);backdrop-filter:blur(6px);font-size:18px;line-height:1}
+.rv-bar{position:absolute;inset:auto 0 0;z-index:4;height:18px;display:flex;align-items:flex-end;cursor:pointer;direction:ltr}
+.rv-bar::before{content:"";position:absolute;inset:auto 0 0;height:4px;background:rgba(244,241,234,.25)}
+.rv-bar i{position:relative;display:block;height:4px;width:0;background:var(--gold)}
 .rv-top{position:absolute;top:env(safe-area-inset-top,0px);inset-inline:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px}
 .rv-count{font-family:var(--f-mono);font-size:13px;color:var(--muted);letter-spacing:.1em}
 .rv-x{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);font-size:18px}
@@ -974,9 +984,31 @@ const CREDITS = {
   const showReel = (k) => {
     rvAt = (k + rvList.length) % rvList.length;
     const r = REELS[rvList[rvAt]];
+    // Own minimal controls instead of the browser's (no download / save menu)
     rvStage.innerHTML = r.type === 'youtube'
       ? `<iframe src="https://www.youtube-nocookie.com/embed/${ytId(r.src)}?autoplay=1&rel=0&playsinline=1&loop=1&playlist=${ytId(r.src)}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen title="${esc(r.title || 'ريل')}"></iframe>`
-      : `<video src="${esc(res(r.src))}"${reelPoster(r) ? ` poster="${esc(reelPoster(r))}"` : ''} controls autoplay playsinline loop></video>`;
+      : `<video src="${esc(res(r.src))}"${reelPoster(r) ? ` poster="${esc(reelPoster(r))}"` : ''} autoplay playsinline loop disablepictureinpicture disableremoteplayback controlslist="nodownload noplaybackrate noremoteplayback"></video>
+         <button type="button" class="rv-tap" aria-label="إيقاف أو تشغيل"></button>
+         <span class="rv-paused" aria-hidden="true"><svg><use href="#i-play"/></svg></span>
+         <button type="button" class="rv-snd" aria-label="كتم الصوت">🔊</button>
+         <div class="rv-bar" aria-hidden="true"><i></i></div>`;
+    const v = $('video', rvStage);
+    if (v) {
+      const snd = $('.rv-snd', rvStage), bar = $('.rv-bar i', rvStage);
+      const setSnd = () => { snd.textContent = v.muted ? '🔇' : '🔊'; snd.setAttribute('aria-label', v.muted ? 'تشغيل الصوت' : 'كتم الصوت'); };
+      v.muted = false;
+      v.play().catch(() => { v.muted = true; setSnd(); v.play().catch(() => {}); });
+      v.addEventListener('play', () => rvStage.classList.remove('is-paused'));
+      v.addEventListener('pause', () => rvStage.classList.add('is-paused'));
+      v.addEventListener('timeupdate', () => { if (v.duration) bar.style.width = (v.currentTime / v.duration * 100).toFixed(2) + '%'; });
+      $('.rv-tap', rvStage).addEventListener('click', () => (v.paused ? v.play().catch(() => {}) : v.pause()));
+      snd.addEventListener('click', () => { v.muted = !v.muted; setSnd(); if (v.paused) v.play().catch(() => {}); });
+      $('.rv-bar', rvStage).addEventListener('click', (e) => {
+        const r2 = e.currentTarget.getBoundingClientRect();
+        if (v.duration) v.currentTime = v.duration * Math.min(1, Math.max(0, (e.clientX - r2.left) / r2.width));
+      });
+      setSnd();
+    }
     rvCap.innerHTML = `${esc(r.title || '')}${r.desc ? `<small>${esc(r.desc)}</small>` : ''}`;
     rvCount.textContent = `${rvAt + 1} / ${rvList.length}`;
     $('#rv-prev').disabled = $('#rv-next').disabled = rvList.length < 2;
@@ -997,6 +1029,8 @@ const CREDITS = {
     playActive();
   };
   $('#rv-x').addEventListener('click', closeReel);
+  // No "save video" menu on right-click / long-press for the reels
+  [rv, stage].forEach((el) => el.addEventListener('contextmenu', (e) => { if (e.target.closest('video, .reel, .rv-stage')) e.preventDefault(); }));
   $('#rv-next').addEventListener('click', () => showReel(rvAt + 1));
   $('#rv-prev').addEventListener('click', () => showReel(rvAt - 1));
   rv.addEventListener('click', (e) => { if (e.target === rv) closeReel(); });
@@ -1044,7 +1078,7 @@ const CREDITS = {
     const el = e.target.closest('button.work'); if (!el) return;
     const w = LIST[+el.dataset.i]; last = el;
     lbm.innerHTML = w.type === 'youtube' ? `<iframe src="https://www.youtube-nocookie.com/embed/${ytId(w.src)}?autoplay=1&rel=0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen title="${esc(w.title)}"></iframe>`
-      : w.type === 'video' ? `<video src="${esc(res(w.src))}" controls autoplay playsinline></video>`
+      : w.type === 'video' ? `<video src="${esc(res(w.src))}" controls autoplay playsinline disablepictureinpicture controlslist="nodownload noplaybackrate" oncontextmenu="return false"></video>`
       : `<img src="${esc(res(w.src))}" alt="${esc(w.title)}">`;
     lbc.innerHTML = `<small>${catLine(w)}</small>${esc(w.title)}${w.desc ? `<span class="lb-desc">${esc(w.desc)}</span>` : ''}${w.type === 'youtube' ? `<a class="lb-yt" href="${ytUrl(w.src)}" target="_blank" rel="noopener">مشاهدة على يوتيوب ↗</a>` : ''}`;
     lb.classList.add('open'); document.body.style.overflow = 'hidden'; $('#lb-x').focus();
