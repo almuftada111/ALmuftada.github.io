@@ -196,25 +196,36 @@ button.work,a.work{display:block;cursor:pointer;text-align:right;width:100%;font
 .work:hover img,.work:hover video,.work:hover .scene{transform:scale(1.05)}
 .work:hover .vf,.work:focus-visible .vf{opacity:1;transform:none}
 
-/* ---------- reels (9:16) ---------- */
+/* ---------- reels (9:16): centre-focused endless slider ---------- */
 .reels-sec{padding-bottom:clamp(50px,7vw,90px)}
-.reels-track{--edge:max(var(--gutter),calc((100vw - var(--wrap)) / 2 + var(--gutter)));display:flex;gap:14px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;padding:6px var(--edge) 16px;scroll-padding-inline:var(--edge);scrollbar-width:thin;scrollbar-color:rgba(226,178,76,.4) transparent}
-.reels-track:focus-visible{outline:none}
-.reel{flex:none;width:clamp(180px,58vw,260px);aspect-ratio:9/16;position:relative;border-radius:10px;overflow:hidden;scroll-snap-align:start;background:var(--navy);isolation:isolate;text-align:right;display:block;cursor:pointer;border:1px solid var(--line);transition:border-color .25s,transform .25s}
-.reel:hover,.reel:focus-visible{border-color:var(--gold);transform:translateY(-3px)}
+.reels-stage{--cw:clamp(210px,58vw,300px);position:relative;isolation:isolate;height:calc(var(--cw) * 16 / 9 + 48px);overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.reels-ring{position:absolute;inset:0}
+.reel{position:absolute;top:24px;left:50%;width:var(--cw);margin-left:calc(var(--cw) / -2);aspect-ratio:9/16;border-radius:14px;overflow:hidden;background:var(--navy);isolation:isolate;text-align:right;cursor:pointer;transition:transform .6s cubic-bezier(.2,.75,.2,1),opacity .6s,box-shadow .6s;will-change:transform;-webkit-tap-highlight-color:transparent}
+.reels-stage.dragging .reel{transition:none}
+.reel.is-active{box-shadow:0 34px 70px -24px rgba(0,0,0,.85),0 0 0 2px var(--gold)}
+.reel:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .reel .scene{position:absolute;inset:0}
-.reel video,.reel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.reel video,.reel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
 .reel::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,8,12,.35) 0%,transparent 22%,transparent 55%,rgba(7,8,12,.92) 100%);z-index:1}
+.reel::before{content:"";position:absolute;inset:0;background:rgba(7,8,12,.5);z-index:5;transition:opacity .6s;pointer-events:none}
+.reel.is-active::before{opacity:0}
 .reel-badge{position:absolute;top:12px;left:12px;z-index:2;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(11,13,18,.5);border:1px solid rgba(244,241,234,.25);backdrop-filter:blur(6px)}
 .reel-badge svg{width:14px;height:14px}
+.reel-snd{position:absolute;top:12px;left:12px;z-index:4;width:40px;height:40px;border-radius:50%;display:none;place-items:center;background:rgba(11,13,18,.55);border:1px solid rgba(244,241,234,.3);backdrop-filter:blur(6px);font-size:17px;line-height:1}
+.reel.is-active .reel-snd{display:grid}
+.reel.is-active .reel-snd + .reel-badge{display:none}
 .reel-tag{position:absolute;top:18px;right:14px;z-index:2;font-family:var(--f-mono);font-size:10px;letter-spacing:.16em;color:rgba(244,241,234,.75);direction:ltr}
 .reel-info{position:absolute;inset:auto 14px 14px;z-index:2}
 .reel-info b{display:block;font-family:var(--f-head);font-weight:600;font-size:16px;line-height:1.4}
 .reel-info span{display:block;font-size:12.5px;color:rgba(244,241,234,.7);margin-top:2px;line-height:1.5}
-.reels-ctl{display:none;justify-content:flex-start;gap:10px}
-.rc-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);font-size:18px;color:var(--paper)}
-.rc-btn:hover{border-color:var(--gold);color:var(--gold)}
-@media (min-width:900px){.reels-ctl{display:flex}}
+.rs-arrow{position:absolute;top:calc(24px + var(--cw) * 8 / 9 - 24px);z-index:200;width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:rgba(11,13,18,.7);backdrop-filter:blur(6px);font-size:20px;color:var(--paper)}
+.rs-arrow:hover{border-color:var(--gold);color:var(--gold)}
+.rs-prev{right:max(8px,calc(50% - var(--cw) / 2 - 72px))}
+.rs-next{left:max(8px,calc(50% - var(--cw) / 2 - 72px))}
+.rs-dots{display:flex;justify-content:center;gap:8px;margin-top:6px;padding-inline:16px;flex-wrap:wrap}
+.rs-dots button{width:8px;height:8px;border-radius:8px;background:rgba(244,241,234,.25);transition:width .3s,background .3s}
+.rs-dots button[aria-current="true"]{width:24px;background:var(--gold)}
+@media (max-width:640px){.rs-arrow{width:40px;height:40px;font-size:17px}}
 
 /* reel viewer */
 .reelv{position:fixed;inset:0;z-index:120;background:rgba(5,6,9,.97);display:flex;align-items:center;justify-content:center;padding:calc(56px + env(safe-area-inset-top,0px)) 16px calc(70px + env(safe-area-inset-bottom,0px));touch-action:pan-x}
@@ -489,14 +500,15 @@ footer p{color:var(--muted);font-size:14px}
   <div class="wrap">
     <div class="sh">
       <div><div class="sh-n ltr">REELS · 9:16</div><h2>ريلز</h2><div class="sh-rule"></div></div>
-      <p>تصوير طولي لصنّاع المحتوى والمنصات الرقمية. اضغط على أي ريل حتى تشوفه بالصوت.</p>
+      <p>تصوير طولي لصنّاع المحتوى والمنصات الرقمية. اسحب يمين ويسار، واضغط على الريل اللي بالنص حتى تشوفه بشاشة كاملة.</p>
     </div>
   </div>
-  <div class="reels-track" id="reels-track" role="list" tabindex="0" aria-label="الريلز"></div>
-  <div class="wrap reels-ctl">
-    <button type="button" class="rc-btn" data-dir="-1" aria-label="الريلز السابقة">→</button>
-    <button type="button" class="rc-btn" data-dir="1" aria-label="الريلز التالية">←</button>
+  <div class="reels-stage" id="reels-stage" aria-roledescription="carousel" aria-label="الريلز">
+    <div class="reels-ring" id="reels-ring"></div>
+    <button type="button" class="rs-arrow rs-prev" id="rs-prev" aria-label="الريل السابق">→</button>
+    <button type="button" class="rs-arrow rs-next" id="rs-next" aria-label="الريل التالي">←</button>
   </div>
+  <div class="rs-dots" id="rs-dots"></div>
 </section>
 
 <!-- WORKS -->
@@ -816,47 +828,149 @@ const CREDITS = {
   };
   renderWorks(WORKS);
 
-  // Reels (9:16): cards play muted while visible; tap opens a full-screen viewer with sound
-  const reelsSec = $('#reels'), track = $('#reels-track'), navReels = $('.nav-links a[href="#reels"]');
+  // Reels (9:16): centre-focused endless slider. The centre reel plays (muted until the
+  // viewer taps 🔇); drag, arrows or dots move it, and it wraps around with no end.
+  // Tapping the centre reel opens the full-screen viewer; tapping a side reel centres it.
+  const reelsSec = $('#reels'), stage = $('#reels-stage'), ring = $('#reels-ring'), dots = $('#rs-dots');
+  const navReels = $('.nav-links a[href="#reels"]');
   const saveData = !!(navigator.connection && navigator.connection.saveData);
-  let REELS = [];
+  const autoOK = () => !reduce && !saveData;
+  let REELS = [], cards = [], active = 0, inView = false, soundOn = false, advTimer = 0;
   const reelPoster = (r) => res(r.poster) || (r.type === 'youtube' ? `https://i.ytimg.com/vi/${ytId(r.src)}/hqdefault.jpg` : '');
-  const cardIO = 'IntersectionObserver' in window ? new IntersectionObserver((es) => es.forEach((e) => {
-    const v = e.target;
-    if (e.isIntersecting && $('#rv').hidden) {
+  const stepOf = () => { const cw = cards[0] ? cards[0].offsetWidth : 240; return Math.min(cw * 0.8, stage.offsetWidth * 0.34); };
+
+  const layout = (drag = 0) => {
+    const n = cards.length; if (!n) return;
+    const step = stepOf();
+    cards.forEach((c, i) => {
+      let rel = (i - active) % n;
+      if (rel > n / 2) rel -= n;
+      if (rel < -n / 2) rel += n;
+      if (n === 2 && rel === -1) rel = 1;          // two reels: the other one waits on the "next" side
+      const off = rel - drag / step, a = Math.abs(off);
+      c.style.transform = `translateX(${(-off * step).toFixed(1)}px) scale(${(1 - Math.min(a, 2) * 0.12).toFixed(3)})`; // RTL: next reels sit to the left
+      c.style.opacity = a > 2.6 ? '0' : String(+(1 - Math.max(0, a - 1) * 0.5).toFixed(2));
+      c.style.zIndex = String(100 - Math.round(a * 10));
+      c.classList.toggle('is-active', i === active);
+      c.tabIndex = i === active ? 0 : -1;
+      c.setAttribute('aria-hidden', a > 2.6 ? 'true' : 'false');
+    });
+    $$('button', dots).forEach((d, i) => d.setAttribute('aria-current', i === active ? 'true' : 'false'));
+  };
+  const playActive = () => {
+    clearTimeout(advTimer);
+    cards.forEach((c, i) => {
+      const v = $('video', c);
+      if (v && i !== active && !v.paused) { v.pause(); try { v.currentTime = 0; } catch (e) {} }
+    });
+    if (!inView || !$('#rv').hidden || !autoOK()) return;
+    const c = cards[active]; if (!c) return;
+    const v = $('video', c);
+    if (v) {
       if (!v.src) v.src = v.dataset.src;
-      v.play().catch(() => {});
-    } else if (!v.paused) v.pause();
-  }), { threshold: 0.6 }) : null;
+      v.muted = !soundOn;
+      v.play().catch(() => { v.muted = true; v.play().catch(() => {}); });
+    } else if (cards.length > 1) {
+      advTimer = setTimeout(() => go(active + 1), 5000);   // covers without video move on by themselves
+    }
+  };
+  const go = (i) => {
+    if (!cards.length) return;
+    active = ((i % cards.length) + cards.length) % cards.length;
+    layout(); playActive();
+  };
+  const syncSound = () => $$('.reel-snd', ring).forEach((b) => {
+    b.textContent = soundOn ? '🔊' : '🔇';
+    b.setAttribute('aria-label', soundOn ? 'كتم الصوت' : 'تشغيل الصوت');
+  });
+
   const renderReels = (list) => {
     REELS = (Array.isArray(list) ? list : []).filter((r) => r && r.src);
     reelsSec.hidden = !REELS.length;
     if (navReels) navReels.hidden = !REELS.length;
-    if (cardIO) cardIO.disconnect();
-    track.innerHTML = REELS.map((r, i) => {
+    ring.innerHTML = REELS.map((r, i) => {
       const ig = r.type === 'instagram', poster = reelPoster(r);
       const media = r.type === 'video'
-        ? `<video muted loop playsinline preload="none"${poster ? ` poster="${esc(poster)}"` : ''} data-src="${esc(res(r.src))}"></video>`
+        ? `<video muted playsinline preload="none"${poster ? ` poster="${esc(poster)}"` : ''} data-src="${esc(res(r.src))}"></video>`
         : poster ? `<img src="${esc(poster)}" alt="" loading="lazy">` : '';
-      const attrs = ig ? ` href="${esc(r.src)}" target="_blank" rel="noopener"` : ` type="button" data-r="${i}"`;
-      const label = (r.title || 'ريل') + (ig ? ' (إنستغرام)' : '');
-      return `<${ig ? 'a' : 'button'} class="reel" role="listitem"${attrs} aria-label="${esc(label)}">
+      const label = `${i + 1} من ${REELS.length}: ${r.title || 'ريل'}${ig ? ' (إنستغرام)' : ''}`;
+      return `<div class="reel" data-i="${i}" role="button" tabindex="-1" aria-label="${esc(label)}">
         <div class="scene"></div>${media}
+        ${r.type === 'video' ? '<button type="button" class="reel-snd" aria-label="تشغيل الصوت">🔇</button>' : ''}
         <span class="reel-badge"><svg><use href="#${ig ? 'i-ig' : 'i-play'}"/></svg></span><span class="reel-tag">REEL</span>
         <div class="reel-info">${r.title ? `<b>${esc(r.title)}</b>` : ''}${r.desc ? `<span>${esc(r.desc)}</span>` : ''}</div>
-      </${ig ? 'a' : 'button'}>`;
+      </div>`;
     }).join('');
-    $$('img', track).forEach((img) => img.addEventListener('error', () => img.remove()));
-    if (cardIO && !reduce && !saveData) $$('video', track).forEach((v) => cardIO.observe(v));
+    cards = $$('.reel', ring);
+    $$('img', ring).forEach((img) => img.addEventListener('error', () => img.remove()));
+    $$('video', ring).forEach((v) => v.addEventListener('ended', () => { if (autoOK()) go(active + 1); }));
+    dots.innerHTML = REELS.length > 1 ? REELS.map((r, i) => `<button type="button" aria-label="الريل ${i + 1}"></button>`).join('') : '';
+    $('#rs-prev').hidden = $('#rs-next').hidden = REELS.length < 2;
+    syncSound();
+    active = 0; layout(); playActive();
   };
-  $$('.rc-btn').forEach((b) => b.addEventListener('click', () => {
-    const card = $('.reel', track); if (!card) return;
-    // RTL: positive "next" moves the strip towards the left
-    track.scrollBy({ left: -(+b.dataset.dir) * (card.offsetWidth + 14) * 2, behavior: reduce ? 'auto' : 'smooth' });
-  }));
 
+  const activate = (i) => {
+    const r = REELS[i]; if (!r) return;
+    if (i !== active) return go(i);
+    if (r.type === 'instagram') { window.open(r.src, '_blank', 'noopener'); return; }
+    openReel(i);
+  };
+  dots.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) go($$('button', dots).indexOf(b)); });
+  $('#rs-next').addEventListener('click', () => go(active + 1));
+  $('#rs-prev').addEventListener('click', () => go(active - 1));
+  stage.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); go(active + 1); $('.reel.is-active', ring).focus(); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); go(active - 1); $('.reel.is-active', ring).focus(); }
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('reel')) { e.preventDefault(); activate(+e.target.dataset.i); }
+  });
+
+  // drag / swipe (RTL: dragging to the right brings the next reel in)
+  let sx = null, sy = 0, dx = 0, dragging = false, moved = false;
+  stage.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || e.target.closest('.rs-arrow, .reel-snd')) return;
+    sx = e.clientX; sy = e.clientY; dx = 0; dragging = false; moved = false;
+  });
+  addEventListener('pointermove', (e) => {
+    if (sx == null) return;
+    dx = e.clientX - sx;
+    if (!dragging && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(e.clientY - sy)) { dragging = true; stage.classList.add('dragging'); clearTimeout(advTimer); }
+    if (dragging) { moved = true; layout(dx); }
+  }, { passive: true });
+  const endDrag = () => {
+    if (sx == null) return;
+    stage.classList.remove('dragging');
+    if (dragging) {
+      const k = Math.round(dx / stepOf()) || (Math.abs(dx) > 40 ? Math.sign(dx) : 0);
+      go(active + k);
+      setTimeout(() => { moved = false; }, 60);   // swallow only the click that ends this drag
+    }
+    sx = null; dragging = false;
+  };
+  addEventListener('pointerup', endDrag);
+  addEventListener('pointercancel', endDrag);
+  ring.addEventListener('click', (e) => {
+    if (moved) { moved = false; return; }
+    if (e.target.closest('.reel-snd')) {
+      soundOn = !soundOn; syncSound();
+      const v = $('video', cards[active]);
+      if (v) { v.muted = !soundOn; if (v.paused) v.play().catch(() => {}); }
+      return;
+    }
+    const c = e.target.closest('.reel'); if (c) activate(+c.dataset.i);
+  });
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver((es) => {
+      inView = es[0].isIntersecting;
+      if (inView) playActive();
+      else { clearTimeout(advTimer); cards.forEach((c) => { const v = $('video', c); if (v) v.pause(); }); }
+    }, { threshold: 0.45 }).observe(stage);
+  } else inView = true;
+  addEventListener('resize', () => layout());
+
+  // Full-screen viewer (with sound); swipe up/down or use the arrows to move between reels
   const rv = $('#rv'), rvStage = $('#rv-stage'), rvCap = $('#rv-cap'), rvCount = $('#rv-count');
-  let rvList = [], rvAt = 0, rvLast = null;
+  let rvList = [], rvAt = 0;
   const showReel = (k) => {
     rvAt = (k + rvList.length) % rvList.length;
     const r = REELS[rvList[rvAt]];
@@ -869,18 +983,19 @@ const CREDITS = {
   };
   const openReel = (i) => {
     rvList = REELS.map((r, j) => (r.type === 'instagram' ? -1 : j)).filter((j) => j >= 0);
+    clearTimeout(advTimer);
+    cards.forEach((c) => { const v = $('video', c); if (v) v.pause(); });
     rv.hidden = false; document.body.style.overflow = 'hidden';
-    $$('video', track).forEach((v) => v.pause());
     showReel(Math.max(0, rvList.indexOf(i)));
     $('#rv-x').focus();
   };
   const closeReel = () => {
     rv.hidden = true; rvStage.innerHTML = ''; document.body.style.overflow = '';
-    if (rvLast) rvLast.focus();
-    // re-observe so the cards in view start playing again
-    if (cardIO && !reduce && !saveData) $$('video', track).forEach((v) => { cardIO.unobserve(v); cardIO.observe(v); });
+    const cur = rvList[rvAt];
+    if (cur != null && cur !== active) { active = cur; layout(); }
+    if (cards[active]) cards[active].focus({ preventScroll: true });
+    playActive();
   };
-  track.addEventListener('click', (e) => { const c = e.target.closest('button.reel'); if (!c) return; rvLast = c; openReel(+c.dataset.r); });
   $('#rv-x').addEventListener('click', closeReel);
   $('#rv-next').addEventListener('click', () => showReel(rvAt + 1));
   $('#rv-prev').addEventListener('click', () => showReel(rvAt - 1));
@@ -895,9 +1010,9 @@ const CREDITS = {
   rv.addEventListener('touchstart', (e) => { ty = e.touches[0].clientY; tx = e.touches[0].clientX; }, { passive: true });
   rv.addEventListener('touchend', (e) => {
     if (ty == null) return;
-    const dy = e.changedTouches[0].clientY - ty, dx = e.changedTouches[0].clientX - tx;
-    if (Math.abs(dy) > 60 && Math.abs(dy) > Math.abs(dx)) showReel(rvAt + (dy < 0 ? 1 : -1));
-    else if (Math.abs(dx) > 60) showReel(rvAt + (dx > 0 ? 1 : -1));   // RTL: swipe right = next
+    const ddy = e.changedTouches[0].clientY - ty, ddx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(ddy) > 60 && Math.abs(ddy) > Math.abs(ddx)) showReel(rvAt + (ddy < 0 ? 1 : -1));
+    else if (Math.abs(ddx) > 60) showReel(rvAt + (ddx > 0 ? 1 : -1));   // RTL: swipe right = next
     ty = tx = null;
   }, { passive: true });
 
