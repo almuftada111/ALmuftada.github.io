@@ -595,15 +595,27 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
     }
   });
 
-  // First frame of a video as a JPEG cover
+  // A cover frame from the video as JPEG. Skips dark frames (fade-ins) by trying later moments.
   const posterFromVideo = (file) => new Promise((ok, bad) => {
     const url = URL.createObjectURL(file), v = document.createElement('video');
-    let done = false;
+    let done = false, times = [], ti = 0;
     const fail = () => { if (!done) { done = true; URL.revokeObjectURL(url); bad(new Error('decode')); } };
+    const brightness = () => {
+      const c = document.createElement('canvas'); c.width = 32; c.height = 32;
+      const g = c.getContext('2d'); g.drawImage(v, 0, 0, 32, 32);
+      const px = g.getImageData(0, 0, 32, 32).data; let s = 0;
+      for (let i = 0; i < px.length; i += 4) s += px[i] * 0.3 + px[i + 1] * 0.59 + px[i + 2] * 0.11;
+      return s / (px.length / 4);
+    };
     v.muted = true; v.playsInline = true; v.preload = 'auto';
-    v.addEventListener('loadeddata', () => { v.currentTime = Math.min(0.6, (v.duration || 1) / 2); });
+    v.addEventListener('loadeddata', () => {
+      const d = v.duration || 1;
+      times = [Math.min(1.5, d * 0.2), d * 0.35, d * 0.5, d * 0.7];
+      v.currentTime = times[0];
+    });
     v.addEventListener('seeked', () => {
       if (done || !v.videoWidth) return fail();
+      if (ti < times.length - 1 && brightness() < 28) { v.currentTime = times[++ti]; return; }
       const k = Math.min(1, 1280 / Math.max(v.videoWidth, v.videoHeight));
       const c = document.createElement('canvas');
       c.width = Math.round(v.videoWidth * k); c.height = Math.round(v.videoHeight * k);
@@ -682,8 +694,9 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
         if (rDraft._posterPreview) URL.revokeObjectURL(rDraft._posterPreview);
         rDraft._poster = p.blob; rDraft._posterPreview = URL.createObjectURL(p.blob);
       }
+      rDraft._wide = p.w > p.h;
       const notes = [`${f.name} · ${mb.toFixed(1)} ميگا · ${p.w}×${p.h}`];
-      if (p.w > p.h) notes.push('⚠️ الفيديو عرضي مو طولي، راح ينقص من الجوانب.');
+      if (p.w > p.h) notes.push('⚠️ الفيديو عرضي مو طولي. راح يبين كامل داخل الكارت الطولي وخلفه نسخة مضببة منه.');
       if (mb > BIG_MB) notes.push(`⚠️ الفيديو كبير (${mb.toFixed(0)} ميگا): الرفع ياخذ وقت (الأفضل على واي فاي)، والزوار ينتظرون أكثر حتى يشتغل. إذا تگدر صدّره 1080p حتى يصير أقل من ${BIG_MB} ميگا.`);
       if (iphoneMov) notes.push('⚠️ فيديوهات الآيفون (MOV) ممكن ما تشتغل على بعض أجهزة الأندرويد. الأضمن تصدّره MP4.');
       info.textContent = notes.join(' ');
@@ -718,6 +731,7 @@ code{font-family:var(--f-mono);font-size:13px;background:rgba(244,241,234,.08);p
     if (rDraft.poster && sameSource) r.poster = rDraft.poster;
     if (rDraft._video) { r._video = rDraft._video; r._videoPreview = rDraft._videoPreview; }
     if (rDraft._poster) { r._poster = rDraft._poster; r._posterPreview = rDraft._posterPreview; }
+    if (t === 'video' && (rDraft._video ? rDraft._wide : rDraft.wide)) r.wide = true;
     if (rEditing >= 0) data.reels[rEditing] = r; else data.reels.unshift(r);
     closeReelEditor(); markDirty(); renderReels();
   });

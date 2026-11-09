@@ -206,6 +206,9 @@ button.work,a.work{display:block;cursor:pointer;text-align:right;width:100%;font
 .reel:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .reel .scene{position:absolute;inset:0}
 .reel video,.reel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.reel-bg{display:none;position:absolute;inset:-24px;background-size:cover;background-position:center;filter:blur(18px) brightness(.5)}
+.reel.is-wide .reel-bg{display:block}
+.reel.is-wide video,.reel.is-wide img{object-fit:contain}
 .reel::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,8,12,.35) 0%,transparent 22%,transparent 55%,rgba(7,8,12,.92) 100%);z-index:1}
 .reel::before{content:"";position:absolute;inset:0;background:rgba(7,8,12,.5);z-index:5;transition:opacity .6s;pointer-events:none}
 .reel.is-active::before{opacity:0}
@@ -232,6 +235,9 @@ button.work,a.work{display:block;cursor:pointer;text-align:right;width:100%;font
 .rv-stage{height:100%;max-height:860px;aspect-ratio:9/16;max-width:100%;border-radius:12px;overflow:hidden;background:#000;position:relative}
 .rv-stage video,.rv-stage iframe{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border:0;background:#000}
 .rv-stage,.reels-stage{-webkit-touch-callout:none}
+.rv-stage.is-ig{background:#fff}
+.rv-stage.is-ig iframe{background:#fff}
+.rv-ig{display:block;width:fit-content;margin:6px auto 0;font-family:var(--f-body);font-size:13px;color:var(--gold);border-bottom:1px solid rgba(226,178,76,.4)}
 .rv-stage video{pointer-events:none}
 .rv-tap{position:absolute;inset:0;z-index:2;cursor:pointer}
 .rv-paused{position:absolute;left:50%;top:50%;z-index:3;width:72px;height:72px;margin:-36px 0 0 -36px;border-radius:50%;display:grid;place-items:center;background:rgba(11,13,18,.55);border:1px solid rgba(244,241,234,.3);backdrop-filter:blur(6px);opacity:0;transition:opacity .2s;pointer-events:none}
@@ -846,6 +852,7 @@ const CREDITS = {
   const saveData = !!(navigator.connection && navigator.connection.saveData);
   const autoOK = () => !reduce && !saveData;
   let REELS = [], cards = [], active = 0, inView = false, soundOn = false, advTimer = 0;
+  const igCode = (u) => (String(u).match(/instagram\.com\/(?:[^/?#]+\/)?(?:reels?|p|tv)\/([\w-]+)/) || [])[1] || '';
   const reelPoster = (r) => res(r.poster) || (r.type === 'youtube' ? `https://i.ytimg.com/vi/${ytId(r.src)}/hqdefault.jpg` : '');
   const stepOf = () => { const cw = cards[0] ? cards[0].offsetWidth : 240; return Math.min(cw * 0.8, stage.offsetWidth * 0.34); };
 
@@ -904,8 +911,10 @@ const CREDITS = {
         ? `<video muted playsinline preload="none"${poster ? ` poster="${esc(poster)}"` : ''} data-src="${esc(res(r.src))}"></video>`
         : poster ? `<img src="${esc(poster)}" alt="" loading="lazy">` : '';
       const label = `${i + 1} من ${REELS.length}: ${r.title || 'ريل'}${ig ? ' (إنستغرام)' : ''}`;
-      return `<div class="reel" data-i="${i}" role="button" tabindex="-1" aria-label="${esc(label)}">
-        <div class="scene"></div>${media}
+      // landscape clips are shown whole, over a blurred copy of their cover
+      const bg = poster ? `<div class="reel-bg" style="background-image:url(&quot;${esc(poster)}&quot;)"></div>` : '';
+      return `<div class="reel${r.wide ? ' is-wide' : ''}" data-i="${i}" role="button" tabindex="-1" aria-label="${esc(label)}">
+        <div class="scene"></div>${bg}${media}
         ${r.type === 'video' ? '<button type="button" class="reel-snd" aria-label="تشغيل الصوت">🔇</button>' : ''}
         <span class="reel-badge"><svg><use href="#${ig ? 'i-ig' : 'i-play'}"/></svg></span><span class="reel-tag">REEL</span>
         <div class="reel-info">${r.title ? `<b>${esc(r.title)}</b>` : ''}${r.desc ? `<span>${esc(r.desc)}</span>` : ''}</div>
@@ -913,7 +922,10 @@ const CREDITS = {
     }).join('');
     cards = $$('.reel', ring);
     $$('img', ring).forEach((img) => img.addEventListener('error', () => img.remove()));
-    $$('video', ring).forEach((v) => v.addEventListener('ended', () => { if (autoOK()) go(active + 1); }));
+    $$('video', ring).forEach((v) => {
+      v.addEventListener('ended', () => { if (autoOK()) go(active + 1); });
+      v.addEventListener('loadedmetadata', () => { if (v.videoWidth > v.videoHeight) v.closest('.reel').classList.add('is-wide'); });
+    });
     dots.innerHTML = REELS.length > 1 ? REELS.map((r, i) => `<button type="button" aria-label="الريل ${i + 1}"></button>`).join('') : '';
     $('#rs-prev').hidden = $('#rs-next').hidden = REELS.length < 2;
     syncSound();
@@ -923,7 +935,6 @@ const CREDITS = {
   const activate = (i) => {
     const r = REELS[i]; if (!r) return;
     if (i !== active) return go(i);
-    if (r.type === 'instagram') { window.open(r.src, '_blank', 'noopener'); return; }
     openReel(i);
   };
   dots.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) go($$('button', dots).indexOf(b)); });
@@ -985,7 +996,10 @@ const CREDITS = {
     rvAt = (k + rvList.length) % rvList.length;
     const r = REELS[rvList[rvAt]];
     // Own minimal controls instead of the browser's (no download / save menu)
-    rvStage.innerHTML = r.type === 'youtube'
+    rvStage.classList.toggle('is-ig', r.type === 'instagram');
+    rvStage.innerHTML = r.type === 'instagram'
+      ? `<iframe src="https://www.instagram.com/reel/${esc(igCode(r.src))}/embed/" allow="autoplay; encrypted-media; fullscreen; clipboard-write" allowfullscreen scrolling="no" title="${esc(r.title || 'ريل إنستغرام')}"></iframe>`
+      : r.type === 'youtube'
       ? `<iframe src="https://www.youtube-nocookie.com/embed/${ytId(r.src)}?autoplay=1&rel=0&playsinline=1&loop=1&playlist=${ytId(r.src)}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen title="${esc(r.title || 'ريل')}"></iframe>`
       : `<video src="${esc(res(r.src))}"${reelPoster(r) ? ` poster="${esc(reelPoster(r))}"` : ''} autoplay playsinline loop disablepictureinpicture disableremoteplayback controlslist="nodownload noplaybackrate noremoteplayback"></video>
          <button type="button" class="rv-tap" aria-label="إيقاف أو تشغيل"></button>
@@ -1009,12 +1023,12 @@ const CREDITS = {
       });
       setSnd();
     }
-    rvCap.innerHTML = `${esc(r.title || '')}${r.desc ? `<small>${esc(r.desc)}</small>` : ''}`;
+    rvCap.innerHTML = `${esc(r.title || '')}${r.desc ? `<small>${esc(r.desc)}</small>` : ''}${r.type === 'instagram' ? `<a class="rv-ig" href="${esc(r.src)}" target="_blank" rel="noopener">فتح على إنستغرام ↗</a>` : ''}`;
     rvCount.textContent = `${rvAt + 1} / ${rvList.length}`;
     $('#rv-prev').disabled = $('#rv-next').disabled = rvList.length < 2;
   };
   const openReel = (i) => {
-    rvList = REELS.map((r, j) => (r.type === 'instagram' ? -1 : j)).filter((j) => j >= 0);
+    rvList = REELS.map((r, j) => j);
     clearTimeout(advTimer);
     cards.forEach((c) => { const v = $('video', c); if (v) v.pause(); });
     rv.hidden = false; document.body.style.overflow = 'hidden';
