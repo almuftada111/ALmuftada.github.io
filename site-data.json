@@ -5,6 +5,13 @@
   },
   "works": [
     {
+      "title": "تغطية خاصة",
+      "cat": "programs",
+      "type": "youtube",
+      "src": "https://www.youtube.com/watch?v=4BIn7aEwoYk",
+      "desc": "تغطية خاصة لدار المسنين"
+    },
+    {
       "title": "محتوى إنستغرام",
       "cat": "social",
       "channel": "انستجرام",
@@ -79,11 +86,6 @@
     }
   ],
   "reels": [
-    {
-      "type": "video",
-      "src": "assets/reels/mw93o5zo-bsd0.mp4",
-      "poster": "assets/reels/mw93o5zo-bsd0.jpg"
-    },
     {
       "type": "video",
       "src": "assets/reels/mw9up2vz-1ye5.mp4",
